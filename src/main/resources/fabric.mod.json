@@ -1,31 +1,25 @@
 {
-	"schemaVersion": 1,
-	"id": "mcsr-collaborative",
-	"version": "${version}",
-	"name": "mcsr-collaborative",
-	"description": "This is an example description! Tell everyone what your mod is about!",
-	"authors": [
-		"Abaan404"
-	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
-	"license": "MIT",
-	"icon": "assets/mcsr-collaborative/icon.png",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"com.abaan404.mcsrcollaborative.Mcsrcollaborative"
-		]
-	},
-	"mixins": [
-		"mcsr-collaborative.mixins.json"
-	],
-	"depends": {
-		"fabricloader": ">=0.19.2",
-		"minecraft": "~26.1.2",
-		"java": ">=25",
-		"fabric-api": "*"
-	}
+    "schemaVersion": 1,
+    "id": "mcsr-collaborative",
+    "version": "${version}",
+    "name": "mcsr-collaborative",
+    "description": "This is an example description! Tell everyone what your mod is about!",
+    "authors": ["Abaan404"],
+    "contact": {
+        "homepage": "https://fabricmc.net/",
+        "sources": "https://github.com/FabricMC/fabric-example-mod"
+    },
+    "license": "MIT",
+    "icon": "assets/mcsr-collaborative/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": ["com.abaan404.mcsrcollaborative.McsrCollaborative"]
+    },
+    "mixins": ["mcsr-collaborative.mixins.json"],
+    "depends": {
+        "fabricloader": ">=0.19.2",
+        "minecraft": "~26.1",
+        "java": ">=25",
+        "fabric-api": "*"
+    }
 }
