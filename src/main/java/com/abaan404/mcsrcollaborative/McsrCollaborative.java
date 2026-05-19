@@ -6,9 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.abaan404.mcsrcollaborative.config.Config;
-import com.abaan404.mcsrcollaborative.motd.ServerMotd;
 import com.abaan404.mcsrcollaborative.processors.ActionBar;
 import com.abaan404.mcsrcollaborative.processors.PlayerDataTransfer;
+import com.abaan404.mcsrcollaborative.processors.PlayerRecorder;
+import com.abaan404.mcsrcollaborative.processors.ServerMotd;
 import com.abaan404.mcsrcollaborative.processors.ServerPauser;
 import com.abaan404.mcsrcollaborative.queue.PlayerQueue;
 
@@ -22,11 +23,11 @@ public class McsrCollaborative implements ModInitializer {
 
     public static final Config CONFIG = new Config();
 
-	@Override
-	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
+    @Override
+    public void onInitialize() {
+        // This code runs as soon as Minecraft is in a mod-load-ready state.
+        // However, some things (like resources) may still be uninitialized.
+        // Proceed with mild caution.
 
         // load configs before anything else
         CONFIG.load();
@@ -35,7 +36,8 @@ public class McsrCollaborative implements ModInitializer {
 
         ActionBar.initialize();
         PlayerDataTransfer.initialize();
+        PlayerRecorder.initialize();
         ServerMotd.initialize();
         ServerPauser.initialize();
-	}
+    }
 }

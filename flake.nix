@@ -1,5 +1,5 @@
 {
-  description = "BoatRacing Minigame";
+  description = "A collaborative MCSR gamemode";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

@@ -1,7 +1,5 @@
 package com.abaan404.mcsrcollaborative.queue;
 
-import java.util.UUID;
-
 import com.abaan404.mcsrcollaborative.McsrCollaborative;
 import com.mojang.serialization.Codec;
 
@@ -13,7 +11,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
 public class SavedQueuedPlayer extends SavedData {
-    private NameAndId nameAndId = new NameAndId(new UUID(0L, 0L), "Mumbo");
+    private NameAndId nameAndId = NameAndId.createOffline("Mumbo");
 
     private static final Codec<SavedQueuedPlayer> CODEC = NameAndId.CODEC.xmap(
             SavedQueuedPlayer::new,

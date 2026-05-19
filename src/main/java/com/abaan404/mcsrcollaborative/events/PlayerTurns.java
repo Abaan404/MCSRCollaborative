@@ -42,27 +42,27 @@ public interface PlayerTurns {
             });
 
     @FunctionalInterface
-    public interface TurnBegin {
+    interface TurnBegin {
         void onTurnBegin(ServerPlayer player);
     }
 
     @FunctionalInterface
-    public interface TurnDisconnect {
+    interface TurnDisconnect {
         void onTurnPause(ServerPlayer player);
     }
 
     @FunctionalInterface
-    public interface TurnReconnect {
+    interface TurnReconnect {
         void onTurnResume(ServerPlayer player);
     }
 
     @FunctionalInterface
-    public interface TurnEnd {
+    interface TurnEnd {
         void onTurnEnd(ServerPlayer player, NameAndId nextPlayer);
     }
 
     @FunctionalInterface
-    public interface TurnTick {
+    interface TurnTick {
         void onTurnTick(ServerPlayer player, long duration);
     }
 }
