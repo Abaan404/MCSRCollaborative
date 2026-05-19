@@ -8,6 +8,10 @@ public abstract class TextUtils {
     private TextUtils() {
     }
 
+    public static Component disconnectTurnFinalized() {
+        return Component.literal("Thank you for playing!");
+    }
+
     public static Component disconnectTurnInvalid(ServerPlayer player, int idx) {
         if (idx > 0) {
             return Component.literal(String.format("Not yet! You're waiting for %d player(s) to play.", idx));
@@ -17,7 +21,7 @@ public abstract class TextUtils {
 
     }
 
-    public static Component disconnectTurnComplete() {
+    public static Component disconnectTurnEnded() {
         return Component.literal("Thank you for playing! Check back soon for your next turn.");
     }
 
@@ -28,5 +32,11 @@ public abstract class TextUtils {
                 .append(Component.literal(" | "))
                 .append(Component.literal(String.format("Time Left %s", TimeUtils.formatTime(duration)))
                         .withStyle(ChatFormatting.GREEN));
+    }
+
+    public static Component actionBarDuration(long totalDuration) {
+        return Component.empty()
+                .append(Component.literal(String.format("IGT %s", TimeUtils.formatTime(totalDuration)))
+                        .withStyle(ChatFormatting.DARK_GREEN, ChatFormatting.BOLD));
     }
 }

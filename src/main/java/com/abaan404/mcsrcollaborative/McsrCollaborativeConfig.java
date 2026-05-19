@@ -1,4 +1,4 @@
-package com.abaan404.mcsrcollaborative.config;
+package com.abaan404.mcsrcollaborative;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-import com.abaan404.mcsrcollaborative.McsrCollaborative;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -19,7 +18,7 @@ import net.casual.arcade.replay.recorder.settings.SimpleRecorderSettings;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.players.NameAndId;
 
-public class Config {
+public class McsrCollaborativeConfig {
 
     private static final Path PATH = FabricLoader.getInstance()
             .getConfigDir()

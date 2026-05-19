@@ -18,17 +18,17 @@ public class ServerPauser {
         this.setPause(player.level().getServer(), true);
     }
 
-    private void unpauseServer(ServerPlayer player) {
+    private void resumeServer(ServerPlayer player) {
         this.setPause(player.level().getServer(), false);
     }
 
     public static void initialize() {
-        // freeze immediately
         ServerLifecycleEvents.SERVER_STARTED.register(server -> INSTANCE.setPause(server, true));
 
-        PlayerTurns.BEGIN.register(player -> INSTANCE.unpauseServer(player));
-        PlayerTurns.PAUSE.register(player -> INSTANCE.pauseServer(player));
-        PlayerTurns.RESUME.register(player -> INSTANCE.unpauseServer(player));
+        PlayerTurns.BEGIN.register(INSTANCE::resumeServer);
+        PlayerTurns.PAUSE.register(INSTANCE::pauseServer);
+        PlayerTurns.RESUME.register(INSTANCE::resumeServer);
         PlayerTurns.END.register((player, _) -> INSTANCE.pauseServer(player));
+        PlayerTurns.FINALIZE.register(server -> INSTANCE.setPause(server, true));
     }
 }

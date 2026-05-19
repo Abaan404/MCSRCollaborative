@@ -2,8 +2,11 @@ package com.abaan404.mcsrcollaborative.processors;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
+import java.util.UUID;
 
 import com.abaan404.mcsrcollaborative.McsrCollaborative;
+import com.abaan404.mcsrcollaborative.McsrCollaborativeManager;
 import com.abaan404.mcsrcollaborative.events.PlayerTurns;
 
 import net.minecraft.nbt.CompoundTag;
@@ -19,7 +22,13 @@ import net.minecraft.world.level.storage.TagValueOutput;
 public class PlayerDataTransfer {
     public static PlayerDataTransfer INSTANCE = new PlayerDataTransfer();
 
-    private void onPlayerTurnEnd(ServerPlayer player, NameAndId nextPlayer) {
+    private void onPlayerTurnEnd(ServerPlayer player, Optional<NameAndId> nextPlayerNameAndId) {
+        if (McsrCollaborativeManager.INSTANCE.isEnded(player.level().getServer())) {
+            return;
+        }
+
+        UUID nextPlayerId = nextPlayerNameAndId.orElseThrow().id();
+
         MinecraftServer server = player.level().getServer();
         Path playerDirPath = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
 
@@ -29,11 +38,11 @@ public class PlayerDataTransfer {
             player.saveWithoutId(output);
             CompoundTag dataToStore = output.buildResult();
 
-            Path tmpFile = Files.createTempFile(playerDirPath, nextPlayer.id() + "-", ".dat");
+            Path tmpFile = Files.createTempFile(playerDirPath, nextPlayerId + "-", ".dat");
             NbtIo.writeCompressed(dataToStore, tmpFile);
 
-            Path realFile = playerDirPath.resolve(nextPlayer.id() + ".dat");
-            Path oldFile = playerDirPath.resolve(nextPlayer.id() + ".dat_old");
+            Path realFile = playerDirPath.resolve(nextPlayerId + ".dat");
+            Path oldFile = playerDirPath.resolve(nextPlayerId + ".dat_old");
             Util.safeReplaceFile(realFile, tmpFile, oldFile);
 
         } catch (Exception var11) {

@@ -5,13 +5,10 @@ import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.abaan404.mcsrcollaborative.config.Config;
 import com.abaan404.mcsrcollaborative.processors.ActionBar;
 import com.abaan404.mcsrcollaborative.processors.PlayerDataTransfer;
 import com.abaan404.mcsrcollaborative.processors.PlayerRecorder;
-import com.abaan404.mcsrcollaborative.processors.ServerMotd;
 import com.abaan404.mcsrcollaborative.processors.ServerPauser;
-import com.abaan404.mcsrcollaborative.queue.PlayerQueue;
 
 public class McsrCollaborative implements ModInitializer {
 	public static final String MOD_ID = "mcsr-collaborative";
@@ -21,7 +18,7 @@ public class McsrCollaborative implements ModInitializer {
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static final Config CONFIG = new Config();
+    public static final McsrCollaborativeConfig CONFIG = new McsrCollaborativeConfig();
 
     @Override
     public void onInitialize() {
@@ -32,12 +29,11 @@ public class McsrCollaborative implements ModInitializer {
         // load configs before anything else
         CONFIG.load();
 
-        PlayerQueue.initialize();
+        McsrCollaborativeManager.initialize();
 
         ActionBar.initialize();
         PlayerDataTransfer.initialize();
         PlayerRecorder.initialize();
-        ServerMotd.initialize();
         ServerPauser.initialize();
     }
 }

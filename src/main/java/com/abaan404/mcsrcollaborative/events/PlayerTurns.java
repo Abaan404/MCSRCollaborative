@@ -1,7 +1,10 @@
 package com.abaan404.mcsrcollaborative.events;
 
+import java.util.Optional;
+
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
 
@@ -41,6 +44,13 @@ public interface PlayerTurns {
                 }
             });
 
+    Event<TurnFinalize> FINALIZE = EventFactory.createArrayBacked(TurnFinalize.class,
+            (listeners) -> (server) -> {
+                for (TurnFinalize listener : listeners) {
+                    listener.onGameFinalize(server);
+                }
+            });
+
     @FunctionalInterface
     interface TurnBegin {
         void onTurnBegin(ServerPlayer player);
@@ -58,11 +68,16 @@ public interface PlayerTurns {
 
     @FunctionalInterface
     interface TurnEnd {
-        void onTurnEnd(ServerPlayer player, NameAndId nextPlayer);
+        void onTurnEnd(ServerPlayer player, Optional<NameAndId> nextPlayer);
     }
 
     @FunctionalInterface
     interface TurnTick {
         void onTurnTick(ServerPlayer player, long duration);
+    }
+
+    @FunctionalInterface
+    interface TurnFinalize {
+        void onGameFinalize(MinecraftServer server);
     }
 }
