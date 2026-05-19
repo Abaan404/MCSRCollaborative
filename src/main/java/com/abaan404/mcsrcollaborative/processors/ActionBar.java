@@ -30,7 +30,7 @@ public class ActionBar {
                 TextUtils.actionBarDuration(inGameTimeMs));
 
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-            if (!McsrCollaborativeManager.INSTANCE.isPlayer(p)) {
+            if (!McsrCollaborativeManager.INSTANCE.isCurrentPlayer(p)) {
                 p.connection.send(packet);
             }
         }

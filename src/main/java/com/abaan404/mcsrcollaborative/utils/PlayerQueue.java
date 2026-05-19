@@ -8,7 +8,7 @@ import net.minecraft.server.players.NameAndId;
 
 public class PlayerQueue {
     private final Object2ObjectLinkedOpenHashMap<UUID, NameAndId> playerQueue = new Object2ObjectLinkedOpenHashMap<>();
-    public static NameAndId DEFAULT = NameAndId.createOffline("Nobody");
+    public static final NameAndId DEFAULT = NameAndId.createOffline("Nobody");
 
     public PlayerQueue(List<NameAndId> players) {
         for (NameAndId player : players) {
@@ -79,16 +79,34 @@ public class PlayerQueue {
      * @return The previous player.
      */
     public NameAndId cyclePlayers() {
+        if (this.playerQueue.isEmpty()) {
+            return this.playerQueue.defaultReturnValue();
+        }
+
         return this.playerQueue.getAndMoveToLast(this.playerQueue.firstKey());
     }
 
     /**
-     * Set a player to the front of the queue. If they dont exist, add them.
+     * Cycles till the player is at the front of the queue. If they dont exist, add
+     * them.
      *
      * @param player The player's name and id.
+     * @return if the player updated
      */
-    public void setPlayer(NameAndId player) {
-        this.playerQueue.putAndMoveToFirst(player.id(), player);
+    public boolean setPlayer(NameAndId player) {
+        if (this.isCurrentPlayer(player)) {
+            return false;
+        }
+
+        if (this.hasPlayer(player)) {
+            while (!this.isCurrentPlayer(player)) {
+                this.cyclePlayers();
+            }
+        } else {
+            this.playerQueue.putAndMoveToFirst(player.id(), player);
+        }
+
+        return true;
     }
 
     /**
@@ -101,6 +119,22 @@ public class PlayerQueue {
         return this.playerQueue.containsKey(player.id());
     }
 
+    /**
+     * Test if the player is the current player.
+     *
+     * @param player The player's name and id.
+     * @return If theyre currently in front.
+     */
+    public boolean isCurrentPlayer(NameAndId player) {
+        return this.getCurrentPlayer().id().equals(player.id());
+    }
+
+    /**
+     * Get the number of turns till its this player's turn, -1 if not in the queue.
+     *
+     * @param player The player.
+     * @return Their turn count.
+     */
     public int getCountTillTurn(NameAndId player) {
         int idx = 0;
 

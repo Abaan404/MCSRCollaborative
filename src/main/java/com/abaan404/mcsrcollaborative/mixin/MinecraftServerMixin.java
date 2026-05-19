@@ -1,5 +1,6 @@
 package com.abaan404.mcsrcollaborative.mixin;
 
+import java.util.EnumSet;
 import java.util.Optional;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,7 +24,9 @@ public class MinecraftServerMixin {
         MinecraftServer server = (MinecraftServer) (Object) this;
 
         String playerName = McsrCollaborativeManager.INSTANCE.getCurrentPlayerNameAndId(server).name();
-        String inGameTime = TimeUtils.formatTime(McsrCollaborativeManager.INSTANCE.getInGameTime(server));
+        String inGameTime = TimeUtils.formatTime(McsrCollaborativeManager.INSTANCE.getInGameTime(server) * 50,
+                EnumSet.complementOf(EnumSet.of(TimeUtils.Selector.HOURS)),
+                EnumSet.complementOf(EnumSet.of(TimeUtils.Selector.MILLISECONDS)));
 
         MutableComponent newDescription = Component.empty();
         original.description().visit((style, contents) -> {

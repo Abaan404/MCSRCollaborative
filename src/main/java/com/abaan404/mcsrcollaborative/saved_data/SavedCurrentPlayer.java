@@ -1,6 +1,7 @@
 package com.abaan404.mcsrcollaborative.saved_data;
 
 import com.abaan404.mcsrcollaborative.McsrCollaborative;
+import com.abaan404.mcsrcollaborative.utils.PlayerQueue;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -11,7 +12,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
 public class SavedCurrentPlayer extends SavedData {
-    private NameAndId player = NameAndId.createOffline("Mumbo");
+    private NameAndId player = PlayerQueue.DEFAULT;
     private long duration = 0;
     private long timeout = 0;
 
@@ -32,6 +33,7 @@ public class SavedCurrentPlayer extends SavedData {
 
     public SavedCurrentPlayer(NameAndId nameAndId, long duration, long timeout) {
         this.player = nameAndId;
+        this.duration = duration;
         this.timeout = timeout;
     }
 
@@ -54,7 +56,7 @@ public class SavedCurrentPlayer extends SavedData {
     }
 
     public void setDuration(long duration) {
-        this.timeout = duration;
+        this.duration = duration;
         setDirty();
     }
 
