@@ -57,8 +57,12 @@ public class McsrCollaborativeConfig {
         }
     }
 
-    public int getMaxDuration() {
-        return this.primitive.maxDuration;
+    public int getDuration() {
+        return this.primitive.duration;
+    }
+
+    public long getTimeout() {
+        return this.primitive.timeout;
     }
 
     public List<NameAndId> getPlayers() {
@@ -75,7 +79,8 @@ public class McsrCollaborativeConfig {
 
     private static class Primitive {
         public String path = "./mcsr-recordings/";
-        public int maxDuration = 5 * 60 * 1000;
+        public int duration = 5 * 60 * 1000;
+        public long timeout = 24 * 60 * 60 * 1000;
         public List<NameAndId> players = new ObjectArrayList<>();
         public SimpleRecorderSettings recorderSettings = new SimpleRecorderSettings();
     }

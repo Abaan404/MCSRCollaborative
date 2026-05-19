@@ -27,6 +27,7 @@ public class McsrCollaborativeManager {
 
     private int playerQueueIdx = 0;
     private long duration = 0;
+    private long timeout = 0;
 
     public McsrCollaborativeManager(List<NameAndId> players) {
         this.playerQueue = players;
@@ -35,6 +36,7 @@ public class McsrCollaborativeManager {
     /**
      * Peek the active player's uuid.
      *
+     * @param server The server
      * @return The player's uuid.
      */
     public Optional<NameAndId> getCurrentPlayerNameAndId(MinecraftServer server) {
@@ -52,6 +54,7 @@ public class McsrCollaborativeManager {
     /**
      * Peek the active player's uuid.
      *
+     * @param server The server
      * @return The player's uuid.
      */
     public Optional<ServerPlayer> getCurrentPlayer(MinecraftServer server) {
@@ -94,6 +97,7 @@ public class McsrCollaborativeManager {
     /**
      * Has the game ended.
      *
+     * @param server the minecraft server.
      * @return If there was a stored in game time.
      */
     public boolean isEnded(MinecraftServer server) {
@@ -101,18 +105,31 @@ public class McsrCollaborativeManager {
         return savedIgt.getInGameTime() > 0;
     }
 
+    /**
+     * Cycle to the next player.
+     */
+    public void cycleNext(MinecraftServer server) {
+        // update index and timeout
+        this.playerQueueIdx = (this.playerQueueIdx + 1) % this.playerQueue.size();
+        this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
+    }
+
     private void onServerStart(MinecraftServer server) {
         // restore queue on server start
-        NameAndId savedUuid = SavedCurrentPlayer.getInstance(server).getPlayer();
+        SavedCurrentPlayer savedPlayer = SavedCurrentPlayer.getInstance(server);
 
         for (int i = 0; i < this.playerQueue.size(); i++) {
             UUID id = this.playerQueue.get(i).id();
 
-            if (id.equals(savedUuid.id())) {
+            if (id.equals(savedPlayer.getPlayer().id())) {
                 this.playerQueueIdx = i;
+                this.timeout = savedPlayer.getTimeout();
                 return;
             }
         }
+
+        this.playerQueueIdx = 0;
+        this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
     }
 
     private void onGameEnd(ServerPlayer player) {
@@ -136,7 +153,7 @@ public class McsrCollaborativeManager {
             if (this.duration > 0) {
                 PlayerTurns.RESUME.invoker().onTurnResume(player);
             } else {
-                this.duration = McsrCollaborative.CONFIG.getMaxDuration();
+                this.duration = McsrCollaborative.CONFIG.getDuration() / 50;
                 PlayerTurns.BEGIN.invoker().onTurnBegin(player);
             }
 
@@ -169,6 +186,15 @@ public class McsrCollaborativeManager {
     }
 
     private void tick(MinecraftServer server) {
+        if (this.timeout > 0) {
+            this.timeout--;
+
+            // player didnt join, go next
+            if (this.timeout <= 0) {
+                this.cycleNext(server);
+            }
+        }
+
         this.getCurrentPlayer(server).ifPresent(player -> {
             if (this.duration > 0) {
                 this.duration--;
@@ -176,8 +202,7 @@ public class McsrCollaborativeManager {
                 PlayerTurns.TICK.invoker().onTurnTick(player, this.duration);
 
             } else {
-                // cycle to next
-                this.playerQueueIdx = (this.playerQueueIdx + 1) % this.playerQueue.size();
+                this.cycleNext(server);
                 PlayerTurns.END.invoker().onTurnEnd(player, this.getCurrentPlayerNameAndId(server));
 
                 // disconnect
@@ -186,6 +211,7 @@ public class McsrCollaborativeManager {
                 // save to persistent storage
                 SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
                 savedQueuedPlayer.setPlayer(player.nameAndId());
+                savedQueuedPlayer.setTimeout(this.timeout);
 
                 // why are you here
                 this.getCurrentPlayer(server).ifPresent(nextPlayer -> {
