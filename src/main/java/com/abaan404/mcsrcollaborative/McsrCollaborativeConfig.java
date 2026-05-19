@@ -30,10 +30,9 @@ public class McsrCollaborativeConfig {
 
     private Primitive primitive = new Primitive();
 
-    public void load() {
+    public boolean load() {
         if (!Files.exists(PATH)) {
             save();
-            return;
         }
 
         try (BufferedReader reader = Files.newBufferedReader(PATH, StandardCharsets.UTF_8)) {
@@ -43,10 +42,13 @@ public class McsrCollaborativeConfig {
             }
         } catch (IOException e) {
             McsrCollaborative.LOGGER.error("Failed to load config at {}: {}", PATH, e.getMessage());
+            return false;
         }
+
+        return true;
     }
 
-    public void save() {
+    public boolean save() {
         try {
             Files.createDirectories(PATH.getParent());
             try (BufferedWriter writer = Files.newBufferedWriter(PATH, StandardCharsets.UTF_8)) {
@@ -54,7 +56,10 @@ public class McsrCollaborativeConfig {
             }
         } catch (IOException e) {
             McsrCollaborative.LOGGER.error("Failed to save config at {}: {}", PATH, e.getMessage());
+            return false;
         }
+
+        return true;
     }
 
     public int getDuration() {
@@ -63,6 +68,11 @@ public class McsrCollaborativeConfig {
 
     public long getTimeout() {
         return this.primitive.timeout;
+    }
+
+    public void setPlayers(List<NameAndId> players) {
+        this.primitive.players = players;
+        this.save();
     }
 
     public List<NameAndId> getPlayers() {

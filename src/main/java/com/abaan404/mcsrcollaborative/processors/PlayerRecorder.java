@@ -1,8 +1,6 @@
 package com.abaan404.mcsrcollaborative.processors;
 
 import java.nio.file.Path;
-import java.util.Optional;
-
 import com.abaan404.mcsrcollaborative.McsrCollaborative;
 import com.abaan404.mcsrcollaborative.McsrCollaborativeManager;
 import com.abaan404.mcsrcollaborative.events.PlayerTurns;
@@ -43,7 +41,7 @@ public class PlayerRecorder {
         ReplayPlayerRecorders.get(player).forEach(ReplayRecorder::resume);
     }
 
-    private void onPlayerEnd(ServerPlayer player, Optional<NameAndId> nextPlayer) {
+    private void onPlayerEnd(ServerPlayer player, NameAndId nextPlayer) {
         ReplayPlayerRecorders.get(player).forEach(ReplayRecorder::pause);
     }
 

@@ -12,11 +12,13 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 
 public class SavedCurrentPlayer extends SavedData {
     private NameAndId player = NameAndId.createOffline("Mumbo");
+    private long duration = 0;
     private long timeout = 0;
 
     public static final Codec<SavedCurrentPlayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             NameAndId.CODEC.fieldOf("name_and_id").forGetter(SavedCurrentPlayer::getPlayer),
-            Codec.LONG.fieldOf("time_of_day").forGetter(SavedCurrentPlayer::getTimeout))
+            Codec.LONG.fieldOf("duration").forGetter(SavedCurrentPlayer::getDuration),
+            Codec.LONG.fieldOf("timeout").forGetter(SavedCurrentPlayer::getTimeout))
             .apply(instance, SavedCurrentPlayer::new));
 
     private static final SavedDataType<SavedCurrentPlayer> TYPE = new SavedDataType<>(
@@ -28,14 +30,19 @@ public class SavedCurrentPlayer extends SavedData {
     public SavedCurrentPlayer() {
     }
 
-    public SavedCurrentPlayer(NameAndId nameAndId, long nextTimeout) {
+    public SavedCurrentPlayer(NameAndId nameAndId, long duration, long timeout) {
         this.player = nameAndId;
-        this.timeout = nextTimeout;
+        this.timeout = timeout;
     }
 
     public NameAndId getPlayer() {
         return this.player;
     }
+
+    public long getDuration() {
+        return this.duration;
+    }
+
 
     public long getTimeout() {
         return this.timeout;
@@ -46,8 +53,13 @@ public class SavedCurrentPlayer extends SavedData {
         setDirty();
     }
 
-    public void setTimeout(long nextTimeout) {
-        this.timeout = nextTimeout;
+    public void setDuration(long duration) {
+        this.timeout = duration;
+        setDirty();
+    }
+
+    public void setTimeout(long timeout) {
+        this.timeout = timeout;
         setDirty();
     }
 

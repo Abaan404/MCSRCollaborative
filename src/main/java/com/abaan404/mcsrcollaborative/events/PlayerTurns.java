@@ -1,7 +1,5 @@
 package com.abaan404.mcsrcollaborative.events;
 
-import java.util.Optional;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.server.MinecraftServer;
@@ -68,7 +66,7 @@ public interface PlayerTurns {
 
     @FunctionalInterface
     interface TurnEnd {
-        void onTurnEnd(ServerPlayer player, Optional<NameAndId> nextPlayer);
+        void onTurnEnd(ServerPlayer player, NameAndId nextPlayer);
     }
 
     @FunctionalInterface

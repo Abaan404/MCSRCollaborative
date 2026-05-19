@@ -8,6 +8,7 @@ import com.abaan404.mcsrcollaborative.events.EndCreditEvent;
 import com.abaan404.mcsrcollaborative.events.PlayerTurns;
 import com.abaan404.mcsrcollaborative.saved_data.SavedCompletionIGT;
 import com.abaan404.mcsrcollaborative.saved_data.SavedCurrentPlayer;
+import com.abaan404.mcsrcollaborative.utils.PlayerQueue;
 import com.abaan404.mcsrcollaborative.utils.TextUtils;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -23,43 +24,98 @@ import net.minecraft.world.level.GameType;
 public class McsrCollaborativeManager {
     public static McsrCollaborativeManager INSTANCE;
 
-    private final List<NameAndId> playerQueue;
+    private final PlayerQueue playerQueue;
 
-    private int playerQueueIdx = 0;
+    // private int playerQueueIdx = 0;
     private long duration = 0;
     private long timeout = 0;
 
     public McsrCollaborativeManager(List<NameAndId> players) {
-        this.playerQueue = players;
+        this.playerQueue = new PlayerQueue(players);
     }
 
     /**
-     * Peek the active player's uuid.
+     * See {@link PlayerQueue#getPlayers()}
+     *
+     * @return Te current queue
+     */
+    public List<NameAndId> getPlayerQueue() {
+        return this.playerQueue.getPlayers();
+    }
+
+    /**
+     * See {@link PlayerQueue#addPlayer(NameAndId)}
+     *
+     * @param player The player's name and id.
+     * @return If successful.
+     */
+    public boolean addPlayer(NameAndId player) {
+        return this.playerQueue.addPlayer(player);
+    }
+
+    /**
+     * See {@link PlayerQueue#removePlayer(NameAndId)}
+     *
+     * @param player The player's name and id.
+     * @return If successful.
+     */
+    public boolean removePlayer(NameAndId player) {
+        return this.playerQueue.removePlayer(player);
+    }
+
+    /**
+     * See {@link PlayerQueue#setPlayer(NameAndId)}
+     *
+     * @param player The player's name and id.
+     */
+    public void setPlayer(NameAndId player) {
+        this.playerQueue.setPlayer(player);
+    }
+
+    /**
+     * See {@link PlayerQueue#cyclePlayers()}. Resets internal counters.
+     *
+     * @param server The minecraft server
+     */
+    public void cycleNext(MinecraftServer server) {
+        // update index and timeout
+        this.playerQueue.cyclePlayers();
+        this.duration = McsrCollaborative.CONFIG.getDuration() / 50;
+        this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
+
+        // save to persistent storage
+        SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
+        savedQueuedPlayer.setPlayer(this.getCurrentPlayerNameAndId(server));
+        savedQueuedPlayer.setDuration(this.duration);
+        savedQueuedPlayer.setTimeout(this.timeout);
+    }
+
+    /**
+     * Get the current player's uuid.
      *
      * @param server The server
      * @return The player's uuid.
      */
-    public Optional<NameAndId> getCurrentPlayerNameAndId(MinecraftServer server) {
-        if (this.playerQueue.isEmpty()) {
-            return Optional.empty();
-        }
+    public NameAndId getCurrentPlayerNameAndId(MinecraftServer server) {
+        this.playerQueue.getCurrentPlayer();
 
         if (this.isEnded(server)) {
-            return Optional.empty();
+            return PlayerQueue.DEFAULT;
         }
 
-        return Optional.of(this.playerQueue.get(this.playerQueueIdx));
+        return this.playerQueue.getCurrentPlayer();
     }
 
     /**
-     * Peek the active player's uuid.
+     * Get the current player if online.
      *
      * @param server The server
      * @return The player's uuid.
      */
     public Optional<ServerPlayer> getCurrentPlayer(MinecraftServer server) {
-        return this.getCurrentPlayerNameAndId(server)
-                .flatMap(p -> Optional.ofNullable(server.getPlayerList().getPlayer(p.id())));
+        UUID uuid = this.getCurrentPlayerNameAndId(server).id();
+
+        return Optional.ofNullable(server.getPlayerList().getPlayer(uuid));
     }
 
     /**
@@ -69,14 +125,8 @@ public class McsrCollaborativeManager {
      * @return If it's their turn.
      */
     public boolean isPlayer(ServerPlayer player) {
-        UUID id = player.nameAndId().id();
-        Optional<NameAndId> nameAndId = this.getCurrentPlayerNameAndId(player.level().getServer());
-
-        if (nameAndId.isEmpty()) {
-            return false;
-        }
-
-        return nameAndId.get().id().equals(id);
+        return this.getCurrentPlayerNameAndId(player.level().getServer())
+                .id().equals(player.nameAndId().id());
     }
 
     /**
@@ -105,31 +155,26 @@ public class McsrCollaborativeManager {
         return savedIgt.getInGameTime() > 0;
     }
 
-    /**
-     * Cycle to the next player.
-     */
-    public void cycleNext(MinecraftServer server) {
-        // update index and timeout
-        this.playerQueueIdx = (this.playerQueueIdx + 1) % this.playerQueue.size();
-        this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
-    }
-
     private void onServerStart(MinecraftServer server) {
-        // restore queue on server start
         SavedCurrentPlayer savedPlayer = SavedCurrentPlayer.getInstance(server);
 
-        for (int i = 0; i < this.playerQueue.size(); i++) {
-            UUID id = this.playerQueue.get(i).id();
+        UUID savedUuid = savedPlayer.getPlayer().id();
 
-            if (id.equals(savedPlayer.getPlayer().id())) {
-                this.playerQueueIdx = i;
-                this.timeout = savedPlayer.getTimeout();
-                return;
+        // restore queue on server start
+        if (this.playerQueue.hasPlayer(savedPlayer.getPlayer())) {
+            while (!this.playerQueue.getCurrentPlayer().id().equals(savedUuid)) {
+                this.playerQueue.cyclePlayers();
             }
+
+            this.duration = savedPlayer.getDuration();
+            this.timeout = savedPlayer.getTimeout();
         }
 
-        this.playerQueueIdx = 0;
-        this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
+        // load defaults
+        else {
+            this.duration = McsrCollaborative.CONFIG.getDuration() / 50;
+            this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
+        }
     }
 
     private void onGameEnd(ServerPlayer player) {
@@ -154,6 +199,7 @@ public class McsrCollaborativeManager {
                 PlayerTurns.RESUME.invoker().onTurnResume(player);
             } else {
                 this.duration = McsrCollaborative.CONFIG.getDuration() / 50;
+                this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
                 PlayerTurns.BEGIN.invoker().onTurnBegin(player);
             }
 
@@ -169,11 +215,8 @@ public class McsrCollaborativeManager {
                 return;
             }
 
-            int idx = this.playerQueue.stream()
-                    .map(nameAndId -> nameAndId.id())
-                    .toList()
-                    .indexOf(player.nameAndId().id());
-
+            // disconnect
+            int idx = this.playerQueue.getCountTillTurn(player.nameAndId());
             player.connection.disconnect(TextUtils.disconnectTurnInvalid(player, idx));
         }
     }
@@ -186,8 +229,11 @@ public class McsrCollaborativeManager {
     }
 
     private void tick(MinecraftServer server) {
-        if (this.timeout > 0) {
+        if (this.timeout > 0 && !this.isEnded(server)) {
             this.timeout--;
+
+            SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
+            savedQueuedPlayer.setTimeout(this.timeout);
 
             // player didnt join, go next
             if (this.timeout <= 0) {
@@ -199,19 +245,22 @@ public class McsrCollaborativeManager {
             if (this.duration > 0) {
                 this.duration--;
 
+                SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
+                savedQueuedPlayer.setDuration(this.duration);
+
                 PlayerTurns.TICK.invoker().onTurnTick(player, this.duration);
 
             } else {
                 this.cycleNext(server);
-                PlayerTurns.END.invoker().onTurnEnd(player, this.getCurrentPlayerNameAndId(server));
+
+                // do not invoke END if there is no next player
+                NameAndId nextNameAndId = this.getCurrentPlayerNameAndId(server);
+                if (nextNameAndId != PlayerQueue.DEFAULT) {
+                    PlayerTurns.END.invoker().onTurnEnd(player, this.getCurrentPlayerNameAndId(server));
+                }
 
                 // disconnect
                 player.connection.disconnect(TextUtils.disconnectTurnEnded());
-
-                // save to persistent storage
-                SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
-                savedQueuedPlayer.setPlayer(player.nameAndId());
-                savedQueuedPlayer.setTimeout(this.timeout);
 
                 // why are you here
                 this.getCurrentPlayer(server).ifPresent(nextPlayer -> {

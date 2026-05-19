@@ -22,10 +22,7 @@ public class MinecraftServerMixin {
     private ServerStatus buildServerStatus(ServerStatus original) {
         MinecraftServer server = (MinecraftServer) (Object) this;
 
-        String playerName = McsrCollaborativeManager.INSTANCE.getCurrentPlayerNameAndId(server)
-                .map(nameAndId -> nameAndId.name())
-                .orElse("Nobody");
-
+        String playerName = McsrCollaborativeManager.INSTANCE.getCurrentPlayerNameAndId(server).name();
         String inGameTime = TimeUtils.formatTime(McsrCollaborativeManager.INSTANCE.getInGameTime(server));
 
         MutableComponent newDescription = Component.empty();
