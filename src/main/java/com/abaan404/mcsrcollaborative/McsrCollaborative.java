@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.abaan404.mcsrcollaborative.processors.ActionBar;
+import com.abaan404.mcsrcollaborative.processors.DiscordLink;
 import com.abaan404.mcsrcollaborative.processors.PlayerDataTransfer;
 import com.abaan404.mcsrcollaborative.processors.PlayerRecorder;
 import com.abaan404.mcsrcollaborative.processors.ServerPauser;
@@ -33,6 +34,7 @@ public class McsrCollaborative implements ModInitializer {
         McsrCollaborativeCommands.initialize();
 
         ActionBar.initialize();
+        DiscordLink.initialize();
         PlayerDataTransfer.initialize();
         PlayerRecorder.initialize();
         ServerPauser.initialize();

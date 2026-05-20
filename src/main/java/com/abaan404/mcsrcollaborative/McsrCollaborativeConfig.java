@@ -28,7 +28,7 @@ public class McsrCollaborativeConfig {
             .setPrettyPrinting()
             .create();
 
-    private Primitive primitive = new Primitive();
+    private Root root = new Root();
 
     public boolean load() {
         if (!Files.exists(PATH)) {
@@ -36,9 +36,9 @@ public class McsrCollaborativeConfig {
         }
 
         try (BufferedReader reader = Files.newBufferedReader(PATH, StandardCharsets.UTF_8)) {
-            Primitive loaded = GSON.fromJson(reader, Primitive.class);
+            Root loaded = GSON.fromJson(reader, Root.class);
             if (loaded != null) {
-                this.primitive = loaded;
+                this.root = loaded;
             }
         } catch (IOException e) {
             McsrCollaborative.LOGGER.error("Failed to load config at {}: {}", PATH, e.getMessage());
@@ -52,7 +52,7 @@ public class McsrCollaborativeConfig {
         try {
             Files.createDirectories(PATH.getParent());
             try (BufferedWriter writer = Files.newBufferedWriter(PATH, StandardCharsets.UTF_8)) {
-                GSON.toJson(this.primitive, writer);
+                GSON.toJson(this.root, writer);
             }
         } catch (IOException e) {
             McsrCollaborative.LOGGER.error("Failed to save config at {}: {}", PATH, e.getMessage());
@@ -63,35 +63,54 @@ public class McsrCollaborativeConfig {
     }
 
     public int getDuration() {
-        return this.primitive.duration;
+        return this.root.duration;
     }
 
     public long getTimeout() {
-        return this.primitive.timeout;
+        return this.root.timeout;
     }
 
     public void setPlayers(List<NameAndId> players) {
-        this.primitive.players = players;
+        this.root.players = players;
         this.save();
     }
 
     public List<NameAndId> getPlayers() {
-        return Collections.unmodifiableList(this.primitive.players);
+        return Collections.unmodifiableList(this.root.players);
     }
 
     public RecorderSettings getRecorderSettings() {
-        return this.primitive.recorderSettings;
+        return this.root.recorderSettings;
     }
 
     public Path getRecorderDirectory() {
-        return Path.of(this.primitive.path);
+        return Path.of(this.root.path);
     }
 
-    private static class Primitive {
+    public String getBotToken() {
+        return this.root.bot.token;
+    }
+
+    public String getBotChannel() {
+        return this.root.bot.channel;
+    }
+
+    public String getBotMessage() {
+        return this.root.bot.message;
+    }
+
+    private static class Root {
         public String path = "./mcsr-recordings/";
         public int duration = 5 * 60 * 1000;
         public long timeout = 24 * 60 * 60 * 1000;
         public List<NameAndId> players = new ObjectArrayList<>();
         public SimpleRecorderSettings recorderSettings = new SimpleRecorderSettings();
+        public Bot bot = new Bot();
+    }
+
+    private static class Bot {
+        public String token = "<BOT_TOKEN>";
+        public String channel = "<BOT_CHANNEL>";
+        public String message = "It's %player%'s turn!";
     }
 }

@@ -52,6 +52,17 @@ dependencies {
     include(implementation("net.casualchampionships:arcade-events-server:${project.arcade_version}"))
     include(implementation("net.casualchampionships:arcade-resource-pack-host:${project.arcade_version}"))
     include(implementation("net.casualchampionships:arcade-utils:${project.arcade_version}"))
+
+    // discord chat link
+    implementation("net.dv8tion:JDA:${project.discord_jda_version}") { // replace $version with the latest version
+      // Optionally disable audio natives to reduce jar size by excluding `opus-java` and `tink`
+      // Gradle DSL:
+      exclude module: 'opus-java' // required for encoding audio into opus, not needed if audio is already provided in opus encoding
+      exclude module: 'tink' // required for encrypting and decrypting audio
+      // Kotlin DSL:
+      // exclude(module="opus-java") // required for encoding audio into opus, not needed if audio is already provided in opus encoding
+      // exclude(module="tink") // required for encrypting and decrypting audio
+    }
 }
 
 processResources {
