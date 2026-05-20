@@ -30,6 +30,7 @@ public class McsrCollaborative implements ModInitializer {
         CONFIG.load();
 
         McsrCollaborativeManager.initialize();
+        McsrCollaborativeCommands.initialize();
 
         ActionBar.initialize();
         PlayerDataTransfer.initialize();

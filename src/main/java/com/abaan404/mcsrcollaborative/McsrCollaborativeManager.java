@@ -78,13 +78,13 @@ public class McsrCollaborativeManager {
      * See {@link PlayerQueue#removePlayer(NameAndId)}. Resets internals if the
      * current player was updated.
      *
-     * @param server The minecraft server.
-     * @param player The player's name and id.
+     * @param server   The minecraft server.
+     * @param playerId The player's id.
      * @return If successful.
      */
-    public boolean removePlayer(MinecraftServer server, NameAndId player) {
+    public boolean removePlayer(MinecraftServer server, UUID playerId) {
         NameAndId oldPlayer = this.playerQueue.getCurrentPlayer();
-        boolean ret = this.playerQueue.removePlayer(player);
+        boolean ret = this.playerQueue.removePlayer(playerId);
 
         // update config
         if (ret) {
@@ -138,16 +138,16 @@ public class McsrCollaborativeManager {
      * storage
      *
      * @param server The minecraft server
+     * @return The next player.
      */
-    public void cycleNext(NameAndId player, MinecraftServer server) {
-        Optional<ServerPlayer> player2 = this.getCurrentPlayer(server);
+    public NameAndId cycleNext(MinecraftServer server) {
+        Optional<ServerPlayer> player = this.getCurrentPlayer(server);
 
-        this.playerQueue.cyclePlayers();
+        NameAndId nextNameAndId = this.playerQueue.cyclePlayers();
 
         // if online
-        player2.ifPresent(p -> {
+        player.ifPresent(p -> {
             // do not invoke END if there is no next player
-            NameAndId nextNameAndId = this.getCurrentPlayerNameAndId(server);
             if (this.playerQueue.hasPlayer(nextNameAndId)) {
                 PlayerTurns.END.invoker().onTurnEnd(p, nextNameAndId);
             }
@@ -158,7 +158,7 @@ public class McsrCollaborativeManager {
 
         // why are you here
         this.getCurrentPlayer(server).ifPresent(nextPlayer -> {
-            nextPlayer.connection.disconnect(Component.literal("get out"));
+            nextPlayer.connection.disconnect(Component.literal("PlayerData has been likely corrupted. Fix it manually."));
         });
 
         // reset timer
@@ -170,6 +170,8 @@ public class McsrCollaborativeManager {
         savedQueuedPlayer.setPlayer(this.getCurrentPlayerNameAndId(server));
         savedQueuedPlayer.setDuration(this.duration);
         savedQueuedPlayer.setTimeout(this.timeout);
+
+        return nextNameAndId;
     }
 
     /**
@@ -234,6 +236,24 @@ public class McsrCollaborativeManager {
         return savedIgt.getInGameTime() > 0;
     }
 
+    /**
+     * Get the duration.
+     *
+     * @return Duration in ticks.
+     */
+    public long getDuration() {
+        return this.duration;
+    }
+
+    /**
+     * Get the timeout
+     *
+     * @return The timeout in ticks.
+     */
+    public long getTimeout() {
+        return this.timeout;
+    }
+
     private void onServerStart(MinecraftServer server) {
         SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
 
@@ -265,6 +285,9 @@ public class McsrCollaborativeManager {
             // save igt, sets as ended
             SavedCompletionIGT savedIgt = SavedCompletionIGT.getInstance(server);
             savedIgt.setInGameTime(server.getLevel(ServerLevel.OVERWORLD).getGameTime());
+
+            // invoke events
+            PlayerTurns.FINALIZE.invoker().onGameFinalize(server);
         }
 
         // set player to spectator
@@ -276,6 +299,8 @@ public class McsrCollaborativeManager {
 
         // invoke events
         if (this.isCurrentPlayer(player)) {
+            player.setGameMode(GameType.SURVIVAL);
+
             if (this.duration > 0) {
                 PlayerTurns.RESUME.invoker().onTurnResume(player);
             } else {
@@ -316,7 +341,7 @@ public class McsrCollaborativeManager {
 
             // player didnt join, go next
             if (this.timeout <= 0) {
-                this.cycleNext(this.getCurrentPlayerNameAndId(server), server);
+                this.cycleNext(server);
                 return;
             }
         }
@@ -331,7 +356,7 @@ public class McsrCollaborativeManager {
                 PlayerTurns.TICK.invoker().onTurnTick(player, this.duration);
 
             } else {
-                this.cycleNext(this.getCurrentPlayerNameAndId(server), server);
+                this.cycleNext(server);
             }
         });
     }

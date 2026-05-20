@@ -2,6 +2,7 @@ package com.abaan404.mcsrcollaborative.processors;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.abaan404.mcsrcollaborative.McsrCollaborative;
 import com.abaan404.mcsrcollaborative.McsrCollaborativeManager;
@@ -27,6 +28,11 @@ public class PlayerDataTransfer {
 
         MinecraftServer server = player.level().getServer();
         Path playerDirPath = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
+
+        if (server.getPlayerList().getPlayer(nextPlayer.id()) != null) {
+            McsrCollaborative.LOGGER.error("Next player online, Skipping transferring player save file");
+            return;
+        }
 
         try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(player.problemPath(),
                 McsrCollaborative.LOGGER)) {

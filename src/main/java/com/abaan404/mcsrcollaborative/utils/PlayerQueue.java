@@ -50,16 +50,15 @@ public class PlayerQueue {
     /**
      * Remove a player from the queue.
      *
-     * @param player The player's name and id.
+     * @param player The player's id.
      * @return If it was successful.
      */
-    public boolean removePlayer(NameAndId player) {
-        if (!this.playerQueue.containsKey(player.id())) {
+    public boolean removePlayer(UUID player) {
+        if (!this.playerQueue.containsKey(player)) {
             return false;
         }
 
-        this.playerQueue.remove(player.id());
-
+        this.playerQueue.remove(player);
         return true;
     }
 
@@ -76,14 +75,15 @@ public class PlayerQueue {
     /**
      * Cycle the current player to behind the queue
      *
-     * @return The previous player.
+     * @return The new player.
      */
     public NameAndId cyclePlayers() {
         if (this.playerQueue.isEmpty()) {
             return this.playerQueue.defaultReturnValue();
         }
 
-        return this.playerQueue.getAndMoveToLast(this.playerQueue.firstKey());
+        this.playerQueue.getAndMoveToLast(this.playerQueue.firstKey());
+        return this.getCurrentPlayer();
     }
 
     /**
