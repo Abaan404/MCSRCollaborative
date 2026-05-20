@@ -87,6 +87,10 @@ public class McsrCollaborativeConfig {
         return Path.of(this.root.path);
     }
 
+    public String getApiUri() {
+        return this.root.apiUri;
+    }
+
     public String getBotToken() {
         return this.root.bot.token;
     }
@@ -105,6 +109,7 @@ public class McsrCollaborativeConfig {
         public long timeout = 24 * 60 * 60 * 1000;
         public List<NameAndId> players = new ObjectArrayList<>();
         public SimpleRecorderSettings recorderSettings = new SimpleRecorderSettings();
+        public String apiUri = "http://localhost:3000/api/";
         public Bot bot = new Bot();
     }
 
