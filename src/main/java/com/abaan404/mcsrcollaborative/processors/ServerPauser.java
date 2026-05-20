@@ -28,7 +28,7 @@ public class ServerPauser {
         PlayerTurns.BEGIN.register(INSTANCE::resumeServer);
         PlayerTurns.PAUSE.register(INSTANCE::pauseServer);
         PlayerTurns.RESUME.register(INSTANCE::resumeServer);
-        PlayerTurns.END.register((player, _) -> INSTANCE.pauseServer(player));
+        PlayerTurns.END.register((server, _, _) -> INSTANCE.setPause(server, true));
         PlayerTurns.FINALIZE.register(server -> INSTANCE.setPause(server, true));
     }
 }

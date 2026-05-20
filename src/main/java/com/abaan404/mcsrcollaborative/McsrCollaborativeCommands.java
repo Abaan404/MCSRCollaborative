@@ -203,9 +203,10 @@ public class McsrCollaborativeCommands {
                             .then(Commands.literal("end")
                                     .executes((context) -> {
                                         NameAndId next = McsrCollaborativeManager.INSTANCE
-                                                .getCurrentPlayerNameAndId(context.getSource().getServer());
+                                                .getCurrentPlayer(context.getSource().getServer());
 
-                                        PlayerTurns.END.invoker().onTurnEnd(context.getSource().getPlayer(), next);
+                                        PlayerTurns.END.invoker().onTurnEnd(context.getSource().getServer(),
+                                                context.getSource().getPlayer().nameAndId(), next);
                                         return 1;
                                     }))
                             .then(Commands.literal("pause")

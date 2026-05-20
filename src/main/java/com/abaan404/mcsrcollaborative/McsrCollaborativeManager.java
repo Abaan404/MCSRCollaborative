@@ -124,7 +124,7 @@ public class McsrCollaborativeManager {
 
             // update storage
             SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
-            savedQueuedPlayer.setPlayer(this.getCurrentPlayerNameAndId(server));
+            savedQueuedPlayer.setPlayer(this.getCurrentPlayer(server));
             savedQueuedPlayer.setTimeout(this.timeout);
             savedQueuedPlayer.setDuration(this.duration);
             return true;
@@ -141,25 +141,20 @@ public class McsrCollaborativeManager {
      * @return The next player.
      */
     public NameAndId cycleNext(MinecraftServer server) {
-        Optional<ServerPlayer> player = this.getCurrentPlayer(server);
+        NameAndId prevPlayer = this.playerQueue.cyclePlayers();
+        NameAndId nextPlayer = this.getCurrentPlayer(server);
 
-        NameAndId nextNameAndId = this.playerQueue.cyclePlayers();
+        if (this.playerQueue.hasPlayer(nextPlayer)) {
+            PlayerTurns.END.invoker().onTurnEnd(server, prevPlayer, nextPlayer);
+        }
 
-        // if online
-        player.ifPresent(p -> {
-            // do not invoke END if there is no next player
-            if (this.playerQueue.hasPlayer(nextNameAndId)) {
-                PlayerTurns.END.invoker().onTurnEnd(p, nextNameAndId);
-            }
-
-            // disconnect
-            p.connection.disconnect(TextUtils.disconnectTurnEnded());
-        });
+        Optional.ofNullable(server.getPlayerList().getPlayer(prevPlayer.id()))
+                .ifPresent(p -> p.connection.disconnect(TextUtils.disconnectTurnEnded()));
 
         // why are you here
-        this.getCurrentPlayer(server).ifPresent(nextPlayer -> {
-            nextPlayer.connection.disconnect(Component.literal("PlayerData has been likely corrupted. Fix it manually."));
-        });
+        Optional.ofNullable(server.getPlayerList().getPlayer(nextPlayer.id()))
+                .ifPresent(p -> p.connection
+                        .disconnect(Component.literal("PlayerData has been likely corrupted. Fix it manually.")));
 
         // reset timer
         this.duration = McsrCollaborative.CONFIG.getDuration() / 50;
@@ -167,11 +162,11 @@ public class McsrCollaborativeManager {
 
         // update storage
         SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
-        savedQueuedPlayer.setPlayer(this.getCurrentPlayerNameAndId(server));
+        savedQueuedPlayer.setPlayer(this.getCurrentPlayer(server));
         savedQueuedPlayer.setDuration(this.duration);
         savedQueuedPlayer.setTimeout(this.timeout);
 
-        return nextNameAndId;
+        return nextPlayer;
     }
 
     /**
@@ -180,24 +175,12 @@ public class McsrCollaborativeManager {
      * @param server The server
      * @return The player's uuid.
      */
-    public NameAndId getCurrentPlayerNameAndId(MinecraftServer server) {
+    public NameAndId getCurrentPlayer(MinecraftServer server) {
         if (this.isEnded(server)) {
             return PlayerQueue.DEFAULT;
         }
 
         return this.playerQueue.getCurrentPlayer();
-    }
-
-    /**
-     * Get the current player if online.
-     *
-     * @param server The server
-     * @return The player's uuid.
-     */
-    public Optional<ServerPlayer> getCurrentPlayer(MinecraftServer server) {
-        UUID uuid = this.getCurrentPlayerNameAndId(server).id();
-
-        return Optional.ofNullable(server.getPlayerList().getPlayer(uuid));
     }
 
     /**
@@ -207,7 +190,7 @@ public class McsrCollaborativeManager {
      * @return If it's their turn.
      */
     public boolean isCurrentPlayer(ServerPlayer player) {
-        return this.getCurrentPlayerNameAndId(player.level().getServer()).id().equals(player.nameAndId().id());
+        return this.getCurrentPlayer(player.level().getServer()).id().equals(player.nameAndId().id());
     }
 
     /**
@@ -262,7 +245,7 @@ public class McsrCollaborativeManager {
             this.duration = McsrCollaborative.CONFIG.getDuration() / 50;
             this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
 
-            savedQueuedPlayer.setPlayer(this.getCurrentPlayerNameAndId(server));
+            savedQueuedPlayer.setPlayer(this.getCurrentPlayer(server));
             savedQueuedPlayer.setDuration(this.duration);
             savedQueuedPlayer.setTimeout(this.timeout);
             return;
@@ -346,7 +329,7 @@ public class McsrCollaborativeManager {
             }
         }
 
-        this.getCurrentPlayer(server).ifPresent(player -> {
+        Optional.ofNullable(server.getPlayerList().getPlayer(this.getCurrentPlayer(server).id())).ifPresent(player -> {
             if (this.duration > 0) {
                 this.duration--;
 

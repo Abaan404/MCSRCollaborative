@@ -82,8 +82,7 @@ public class PlayerQueue {
             return this.playerQueue.defaultReturnValue();
         }
 
-        this.playerQueue.getAndMoveToLast(this.playerQueue.firstKey());
-        return this.getCurrentPlayer();
+        return this.playerQueue.getAndMoveToLast(this.playerQueue.firstKey());
     }
 
     /**

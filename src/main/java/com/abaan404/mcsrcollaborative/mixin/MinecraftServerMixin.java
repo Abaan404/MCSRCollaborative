@@ -23,7 +23,7 @@ public class MinecraftServerMixin {
     private ServerStatus buildServerStatus(ServerStatus original) {
         MinecraftServer server = (MinecraftServer) (Object) this;
 
-        String playerName = McsrCollaborativeManager.INSTANCE.getCurrentPlayerNameAndId(server).name();
+        String playerName = McsrCollaborativeManager.INSTANCE.getCurrentPlayer(server).name();
         String inGameTime = TimeUtils.formatTime(McsrCollaborativeManager.INSTANCE.getInGameTime(server) * 50,
                 EnumSet.complementOf(EnumSet.of(TimeUtils.Selector.HOURS)),
                 EnumSet.complementOf(EnumSet.of(TimeUtils.Selector.MILLISECONDS)));

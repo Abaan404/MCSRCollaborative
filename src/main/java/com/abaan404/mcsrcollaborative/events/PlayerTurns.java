@@ -29,9 +29,9 @@ public interface PlayerTurns {
             });
 
     Event<TurnEnd> END = EventFactory.createArrayBacked(TurnEnd.class,
-            (listeners) -> (player, nextPlayer) -> {
+            (listeners) -> (server, player, nextPlayer) -> {
                 for (TurnEnd listener : listeners) {
-                    listener.onTurnEnd(player, nextPlayer);
+                    listener.onTurnEnd(server, player, nextPlayer);
                 }
             });
 
@@ -66,7 +66,7 @@ public interface PlayerTurns {
 
     @FunctionalInterface
     interface TurnEnd {
-        void onTurnEnd(ServerPlayer player, NameAndId nextPlayer);
+        void onTurnEnd(MinecraftServer server, NameAndId player, NameAndId nextPlayer);
     }
 
     @FunctionalInterface

@@ -34,15 +34,15 @@ public class PlayerRecorder {
     }
 
     private void onPlayerPause(ServerPlayer player) {
-        ReplayPlayerRecorders.get(player).forEach(ReplayRecorder::pause);
+        ReplayPlayerRecorders.recorders().forEach(ReplayRecorder::pause);
     }
 
     private void onPlayerResume(ServerPlayer player) {
-        ReplayPlayerRecorders.get(player).forEach(ReplayRecorder::resume);
+        ReplayPlayerRecorders.recorders().forEach(ReplayRecorder::resume);
     }
 
-    private void onPlayerEnd(ServerPlayer player, NameAndId nextPlayer) {
-        ReplayPlayerRecorders.get(player).forEach(ReplayRecorder::pause);
+    private void onPlayerEnd(MinecraftServer server, NameAndId player, NameAndId nextPlayer) {
+        ReplayPlayerRecorders.recorders().forEach(ReplayRecorder::pause);
     }
 
     private void onGameFinalize(MinecraftServer server) {
