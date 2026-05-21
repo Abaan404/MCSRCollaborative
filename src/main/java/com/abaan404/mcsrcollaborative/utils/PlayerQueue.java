@@ -1,9 +1,11 @@
 package com.abaan404.mcsrcollaborative.utils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.server.players.NameAndId;
 
 public class PlayerQueue {
@@ -73,6 +75,27 @@ public class PlayerQueue {
     }
 
     /**
+     * Shuffle the list
+     *
+     * @return The new player.
+     */
+    public NameAndId shufflePlayers() {
+        if (this.playerQueue.isEmpty()) {
+            return this.playerQueue.defaultReturnValue();
+        }
+
+        List<NameAndId> newPlayers = new ObjectArrayList<>(this.getPlayers());
+        Collections.shuffle(newPlayers);
+
+        this.playerQueue.clear();
+        for (NameAndId player : newPlayers) {
+            this.playerQueue.put(player.id(), player);
+        }
+
+        return this.playerQueue.firstEntry().getValue();
+    }
+
+    /**
      * Cycle the current player to behind the queue
      *
      * @return The new player.
@@ -126,24 +149,5 @@ public class PlayerQueue {
      */
     public boolean isCurrentPlayer(NameAndId player) {
         return this.getCurrentPlayer().id().equals(player.id());
-    }
-
-    /**
-     * Get the number of turns till its this player's turn, -1 if not in the queue.
-     *
-     * @param player The player.
-     * @return Their turn count.
-     */
-    public int getCountTillTurn(NameAndId player) {
-        int idx = 0;
-
-        for (UUID id : this.playerQueue.keySet()) {
-            if (id.equals(player.id())) {
-                return idx;
-            }
-            idx++;
-        }
-
-        return -1;
     }
 }

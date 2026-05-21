@@ -40,10 +40,24 @@ public class McsrCollaborativeCommands {
 
         source.sendSuccess(() -> Component.literal(String.format("Queued players (%d):", players.size())), false);
 
+        boolean isShuffled = false;
+        NameAndId shufflePlayer = McsrCollaborativeManager.INSTANCE.getShufflePlayer();
+        NameAndId currentPlayer = McsrCollaborativeManager.INSTANCE.getCurrentPlayer(source.getServer());
+
         for (int i = 0; i < players.size(); i++) {
             NameAndId player = players.get(i);
 
-            String str = String.format("%d) %s (%s)", i + 1, player.name(), player.id());
+            if (player.id().equals(shufflePlayer.id()) && !player.id().equals(currentPlayer.id())) {
+                isShuffled = true;
+            }
+
+            String str;
+            if (!isShuffled) {
+                str = String.format("%d) %s (%s)", i + 1, player.name(), player.id());
+            } else {
+                str = String.format("X) %s (%s)", player.name(), player.id());
+            }
+
             source.sendSuccess(() -> Component.literal(str), false);
         }
 
@@ -138,7 +152,7 @@ public class McsrCollaborativeCommands {
 
     public static void initialize() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            dispatcher.register(Commands.literal("mcsr-collaborative")
+            dispatcher.register(Commands.literal("event")
                     .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
                     .then(Commands.literal("reload")
                             .executes(McsrCollaborativeCommands::reload))

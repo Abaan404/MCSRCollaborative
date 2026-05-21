@@ -26,12 +26,18 @@ public class McsrCollaborativeManager {
 
     private final PlayerQueue playerQueue;
 
-    // private int playerQueueIdx = 0;
+    private NameAndId shufflePlayer;
+
     private long duration = 0;
     private long timeout = 0;
 
     public McsrCollaborativeManager(List<NameAndId> players) {
         this.playerQueue = new PlayerQueue(players);
+        if (!players.isEmpty()) {
+            this.shufflePlayer = players.getFirst();
+        } else {
+            this.shufflePlayer = PlayerQueue.DEFAULT;
+        }
     }
 
     /**
@@ -57,6 +63,10 @@ public class McsrCollaborativeManager {
         // update config
         if (ret) {
             McsrCollaborative.CONFIG.setPlayers(this.getPlayerQueue());
+
+            if (this.shufflePlayer.id().equals(PlayerQueue.DEFAULT.id())) {
+                this.shufflePlayer = player;
+            }
         }
 
         // reset timer if current player changed
@@ -103,6 +113,15 @@ public class McsrCollaborativeManager {
             savedQueuedPlayer.setDuration(this.duration);
         }
 
+        // shuffle pivot player removed, update
+        if (this.shufflePlayer.id().equals(playerId)) {
+            if (this.playerQueue.getPlayers().isEmpty()) {
+                this.shufflePlayer = PlayerQueue.DEFAULT;
+            } else {
+                this.shufflePlayer = this.playerQueue.getCurrentPlayer();
+            }
+        }
+
         return ret;
     }
 
@@ -117,6 +136,11 @@ public class McsrCollaborativeManager {
         if (this.playerQueue.setPlayer(player)) {
             // update config
             McsrCollaborative.CONFIG.setPlayers(this.getPlayerQueue());
+
+            // update shuffle
+            if (this.shufflePlayer.id().equals(PlayerQueue.DEFAULT.id())) {
+                this.shufflePlayer = player;
+            }
 
             // reset timer
             this.duration = McsrCollaborative.CONFIG.getDuration() / 50;
@@ -143,6 +167,12 @@ public class McsrCollaborativeManager {
     public NameAndId cycleNext(MinecraftServer server) {
         NameAndId prevPlayer = this.playerQueue.cyclePlayers();
         NameAndId nextPlayer = this.getCurrentPlayer(server);
+
+        // shuffle on a complete cycle
+        if (this.playerQueue.isCurrentPlayer(this.shufflePlayer)) {
+            nextPlayer = this.playerQueue.shufflePlayers();
+            this.shufflePlayer = nextPlayer;
+        }
 
         if (this.playerQueue.hasPlayer(nextPlayer)) {
             PlayerTurns.END.invoker().onTurnEnd(server, prevPlayer, nextPlayer);
@@ -181,6 +211,15 @@ public class McsrCollaborativeManager {
         }
 
         return this.playerQueue.getCurrentPlayer();
+    }
+
+    /**
+     * Get the current shuffle pivot player's uuid.
+     *
+     * @return The player's uuid.
+     */
+    public NameAndId getShufflePlayer() {
+        return this.shufflePlayer;
     }
 
     /**
@@ -310,8 +349,7 @@ public class McsrCollaborativeManager {
             }
 
             // disconnect
-            int idx = this.playerQueue.getCountTillTurn(player.nameAndId());
-            player.connection.disconnect(TextUtils.disconnectTurnInvalid(player, idx));
+            player.connection.disconnect(Component.literal("Not yet! Check back soon."));
         }
     }
 
