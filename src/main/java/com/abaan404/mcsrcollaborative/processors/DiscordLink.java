@@ -123,17 +123,19 @@ public class DiscordLink extends ListenerAdapter {
 
         CompletableFuture<MemberService.MemberInfo> memberFuture;
         if (nextPlayer.name().startsWith(".")) {
-            memberFuture = MemberService.getMemberByBedrockId(String.valueOf(nextPlayer.id().getLeastSignificantBits()));
+            memberFuture = MemberService.getMemberByBedrockId(nextPlayer.id());
         } else {
-            memberFuture = MemberService.getMemberByJavaId(nextPlayer.id().toString().replaceAll("-", ""));
+            memberFuture = MemberService.getMemberByJavaId(nextPlayer.id());
         }
-        memberFuture.orTimeout(5, TimeUnit.SECONDS).thenAccept((member) ->
-                channel.getGuild().retrieveMemberById(member.id).queue(discordMember ->
-                        channel.sendMessage(new MessageCreateBuilder()
-                                        .setContent(McsrCollaborative.CONFIG.getBotMessage()
-                                                .replace("%player%", discordMember.getAsMention()))
-                                        .build())
-                                .queue()));
+        memberFuture.orTimeout(5, TimeUnit.SECONDS)
+                .thenAccept((member) -> channel.getGuild().retrieveMemberById(member.id)
+                        .queue(discordMember -> channel.sendMessage(new MessageCreateBuilder()
+                                .setContent(McsrCollaborative.CONFIG.getBotMessage()
+                                        .replace("%player%", discordMember.getAsMention()))
+                                .build())
+                                .queue(),
+                                error -> McsrCollaborative.LOGGER.error("Could not find member with discord id {}.",
+                                        member.id)));
     }
 
     public static void initialize() {
@@ -156,5 +158,6 @@ public class DiscordLink extends ListenerAdapter {
         PlayerTurns.END.register(INSTANCE::onPlayerEnd);
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> INSTANCE.server = server);
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> jda.shutdown());
     }
 }
