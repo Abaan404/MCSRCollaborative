@@ -1,15 +1,14 @@
 package com.abaan404.mcsrcollaborative.processors;
 
 import java.util.EnumSet;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.abaan404.mcsrcollaborative.McsrCollaborative;
 import com.abaan404.mcsrcollaborative.McsrCollaborativeManager;
 import com.abaan404.mcsrcollaborative.events.PlayerTurns;
-
 import com.abaan404.mcsrcollaborative.utils.MemberService;
+
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -63,25 +62,16 @@ public class DiscordLink extends ListenerAdapter {
         event.deferReply(true).queue(hook -> {
             String id = event.getMember().getId();
             MemberService.getMemberByDiscordId(id).orTimeout(5, TimeUnit.SECONDS).thenAcceptAsync((member) -> {
-                NameAndId nameAndId;
-                if (member.javaId != null) {
-                    nameAndId = new NameAndId(UUID.fromString(member.javaId.replaceAll(
-                            "(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})",
-                            "$1-$2-$3-$4-$5")), member.javaUsername);
-                } else if (member.bedrockId != null) {
-                    nameAndId = new NameAndId(new UUID(0L, Long.parseLong(member.bedrockId)), "." + member.bedrockUsername);
-                } else {
+                member.asNameAndId().ifPresentOrElse(nameAndId -> {
+                    if (!McsrCollaborativeManager.INSTANCE.addPlayer(this.server, nameAndId)) {
+                        hook.sendMessage("You are already participating!").queue();
+                        return;
+                    }
+
+                    hook.sendMessage("You have been added!").queue();
+                }, () -> {
                     hook.sendMessage("Please link your account first!").queue();
-                    return;
-                }
-
-                if (McsrCollaborativeManager.INSTANCE.getPlayerQueue().contains(nameAndId)) {
-                    hook.sendMessage("You are already participating!").queue();
-                    return;
-                }
-
-                McsrCollaborativeManager.INSTANCE.addPlayer(server, nameAndId);
-                hook.sendMessage("You have been added!").queue();
+                });
             }).exceptionally(throwable -> {
                 McsrCollaborative.LOGGER.error("Error: ", throwable);
                 hook.sendMessage("An error occurred, please contact staff for help").queue();
