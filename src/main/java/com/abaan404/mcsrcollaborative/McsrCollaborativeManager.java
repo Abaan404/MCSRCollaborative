@@ -284,10 +284,17 @@ public class McsrCollaborativeManager {
         if (this.isCurrentPlayer(player)) {
             player.setGameMode(GameType.SURVIVAL);
 
-            if (this.duration > 0) {
-                PlayerTurns.RESUME.invoker().onTurnResume(player);
-            } else {
+            int maxDuration = McsrCollaborative.CONFIG.getDuration() / 50;
+            if (this.duration >= maxDuration) {
                 PlayerTurns.BEGIN.invoker().onTurnBegin(player);
+
+                // clamp back down
+                this.duration = maxDuration;
+
+                SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
+                savedQueuedPlayer.setDuration(this.duration);
+            } else {
+                PlayerTurns.RESUME.invoker().onTurnResume(player);
             }
 
         } else {

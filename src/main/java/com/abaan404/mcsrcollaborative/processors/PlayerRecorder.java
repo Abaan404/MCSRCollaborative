@@ -1,6 +1,7 @@
 package com.abaan404.mcsrcollaborative.processors;
 
 import java.nio.file.Path;
+
 import com.abaan404.mcsrcollaborative.McsrCollaborative;
 import com.abaan404.mcsrcollaborative.McsrCollaborativeManager;
 import com.abaan404.mcsrcollaborative.events.PlayerTurns;
@@ -42,7 +43,7 @@ public class PlayerRecorder {
     }
 
     private void onPlayerEnd(MinecraftServer server, NameAndId player, NameAndId nextPlayer) {
-        ReplayPlayerRecorders.recorders().forEach(ReplayRecorder::pause);
+        ReplayPlayerRecorders.recorders().forEach(ReplayRecorder::stop);
     }
 
     private void onGameFinalize(MinecraftServer server) {
