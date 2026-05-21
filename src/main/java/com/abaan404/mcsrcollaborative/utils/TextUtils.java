@@ -7,14 +7,6 @@ public abstract class TextUtils {
     private TextUtils() {
     }
 
-    public static Component disconnectTurnFinalized() {
-        return Component.literal("Thank you for playing!");
-    }
-
-    public static Component disconnectTurnEnded() {
-        return Component.literal("Thank you for playing! Check back soon for your next turn.");
-    }
-
     public static Component actionBarDuration(long totalDuration, long duration) {
         return Component.empty()
                 .append(Component.literal(String.format("IGT %s", TimeUtils.formatTime(totalDuration)))

@@ -179,7 +179,8 @@ public class McsrCollaborativeManager {
         }
 
         Optional.ofNullable(server.getPlayerList().getPlayer(prevPlayer.id()))
-                .ifPresent(p -> p.connection.disconnect(TextUtils.disconnectTurnEnded()));
+                .ifPresent(p -> p.connection
+                        .disconnect(Component.literal("Thank you for playing! Check back soon for your next turn.")));
 
         // why are you here
         Optional.ofNullable(server.getPlayerList().getPlayer(nextPlayer.id()))
@@ -349,7 +350,11 @@ public class McsrCollaborativeManager {
             }
 
             // disconnect
-            player.connection.disconnect(Component.literal("Not yet! Check back soon."));
+            if (!this.playerQueue.hasPlayer(player.nameAndId())) {
+                player.connection.disconnect(Component.literal("You haven't participated yet! Join the event using /signup in the discord server."));
+            } else {
+                player.connection.disconnect(Component.literal("Not yet! Check back soon."));
+            }
         }
     }
 
