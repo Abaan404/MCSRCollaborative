@@ -46,6 +46,9 @@ public class DiscordLink extends ListenerAdapter {
             case "signup":
                 signup(event);
                 break;
+            case "signout":
+                signout(event);
+                break;
             default:
                 event.reply("That command does not exist!")
                         .setEphemeral(true)
@@ -69,6 +72,33 @@ public class DiscordLink extends ListenerAdapter {
                     }
 
                     hook.sendMessage("You have been added!").queue();
+                }, () -> {
+                    hook.sendMessage("Please link your account first!").queue();
+                });
+            }).exceptionally(throwable -> {
+                McsrCollaborative.LOGGER.error("Error: ", throwable);
+                hook.sendMessage("An error occurred, please contact staff for help").queue();
+                return null;
+            });
+        });
+    }
+
+    private void signout(SlashCommandInteractionEvent event) {
+        if (server == null) {
+            event.reply("Server is still starting!").queue();
+            return;
+        }
+
+        event.deferReply(true).queue(hook -> {
+            String id = event.getMember().getId();
+            MemberService.getMemberByDiscordId(id).orTimeout(5, TimeUnit.SECONDS).thenAcceptAsync((member) -> {
+                member.asNameAndId().ifPresentOrElse(nameAndId -> {
+                    if (!McsrCollaborativeManager.INSTANCE.removePlayer(this.server, nameAndId.id())) {
+                        hook.sendMessage("You are already not participating!").queue();
+                        return;
+                    }
+
+                    hook.sendMessage("You have been removed!").queue();
                 }, () -> {
                     hook.sendMessage("Please link your account first!").queue();
                 });
@@ -115,8 +145,11 @@ public class DiscordLink extends ListenerAdapter {
 
         CommandListUpdateAction commands = jda.updateCommands();
 
-        commands.addCommands(Commands.slash("signup", "Sign up to the MCSR Collaborative event")
-                .setContexts(InteractionContextType.GUILD));
+        commands.addCommands(
+                Commands.slash("signup", "Sign up to the MCSR Collaborative event")
+                        .setContexts(InteractionContextType.GUILD),
+                Commands.slash("signout", "Sign out of the MCSR Collaborative event")
+                        .setContexts(InteractionContextType.GUILD));
 
         commands.queue();
 
