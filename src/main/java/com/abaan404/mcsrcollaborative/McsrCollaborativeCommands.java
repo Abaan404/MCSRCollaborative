@@ -1,9 +1,10 @@
 package com.abaan404.mcsrcollaborative;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import com.abaan404.mcsrcollaborative.events.PlayerTurns;
+import com.abaan404.mcsrcollaborative.utils.MemberService;
 import com.abaan404.mcsrcollaborative.utils.TimeUtils;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -11,7 +12,6 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.server.players.NameAndId;
@@ -68,102 +68,70 @@ public class McsrCollaborativeCommands {
     }
 
     private static int queueAdd(CommandContext<CommandSourceStack> context) {
-        NameAndId player = new NameAndId(
-                UuidArgument.getUuid(context, "uuid"),
-                StringArgumentType.getString(context, "name"));
+        String discordId = StringArgumentType.getString(context, "discord_id");
 
-        boolean ret = McsrCollaborativeManager.INSTANCE.addPlayer(context.getSource().getServer(), player);
+        MemberService.getMemberByDiscordId(discordId)
+                .orTimeout(5, TimeUnit.SECONDS)
+                .thenAcceptAsync(member -> member.asNameAndId().ifPresentOrElse(
+                        player -> {
+                            boolean ret = McsrCollaborativeManager.INSTANCE
+                                    .addPlayer(context.getSource().getServer(), player);
 
-        if (!ret) {
-            context.getSource().sendFailure(Component.literal("Player was already added."));
-            return 0;
-        }
+                            if (!ret) {
+                                context.getSource().sendFailure(Component.literal("Player was already added."));
+                                return;
+                            }
 
-        String str = String.format("Added player: %s (%s)", player.name(), player.id());
-        context.getSource().sendSuccess(() -> Component.literal(str), false);
+                            String str = String.format("Added player: %s (%s)", player.name(), player.id());
+                            context.getSource().sendSuccess(() -> Component.literal(str), false);
+                        },
+                        () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))), context.getSource().getServer());
 
         return 1;
     }
 
-    private static int queueRemoveName(CommandContext<CommandSourceStack> context) {
-        String name = StringArgumentType.getString(context, "name");
+    private static int queueRemove(CommandContext<CommandSourceStack> context) {
+        String discordId = StringArgumentType.getString(context, "discord_id");
 
-        List<NameAndId> players = McsrCollaborativeManager.INSTANCE.getPlayerQueue();
+        MemberService.getMemberByDiscordId(discordId)
+                .orTimeout(5, TimeUnit.SECONDS)
+                .thenAcceptAsync(member -> member.asNameAndId().ifPresentOrElse(
+                        player -> {
+                            boolean ret = McsrCollaborativeManager.INSTANCE
+                                    .removePlayer(context.getSource().getServer(), player.id());
 
-        for (NameAndId player : players) {
-            if (player.name().equals(name)) {
-                McsrCollaborativeManager.INSTANCE.removePlayer(context.getSource().getServer(), player.id());
+                            if (!ret) {
+                                context.getSource().sendFailure(Component.literal("Player was already removed."));
+                                return;
+                            }
 
-                String str = String.format("Removed player: %s (%s)", player.name(), player.id());
-                context.getSource().sendSuccess(() -> Component.literal(str), false);
+                            String str = String.format("Removed player: %s (%s)", player.name(), player.id());
+                            context.getSource().sendSuccess(() -> Component.literal(str), false);
+                        },
+                        () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))), context.getSource().getServer());
 
-                return 1;
-            }
-        }
-
-        context.getSource().sendFailure(Component.literal("Player was already removed or does not exist."));
-        return 0;
-    }
-
-    private static int queueRemoveId(CommandContext<CommandSourceStack> context) {
-        UUID id = UuidArgument.getUuid(context, "id");
-
-        List<NameAndId> players = McsrCollaborativeManager.INSTANCE.getPlayerQueue();
-
-        for (NameAndId player : players) {
-            if (player.id().equals(id)) {
-                McsrCollaborativeManager.INSTANCE.removePlayer(context.getSource().getServer(), player.id());
-
-                String str = String.format("Removed player: %s (%s)", player.name(), player.id());
-                context.getSource().sendSuccess(() -> Component.literal(str), false);
-
-                return 1;
-            }
-        }
-
-        context.getSource().sendFailure(Component.literal("Player was already removed or does not exist."));
-        return 0;
-    }
-
-    private static int queueSetName(CommandContext<CommandSourceStack> context) {
-        String name = StringArgumentType.getString(context, "name");
-
-        List<NameAndId> players = McsrCollaborativeManager.INSTANCE.getPlayerQueue();
-
-        for (NameAndId player : players) {
-            if (player.name().equals(name)) {
-                boolean ret = McsrCollaborativeManager.INSTANCE.setPlayer(context.getSource().getServer(), player);
-
-                if (!ret) {
-                    context.getSource().sendFailure(Component.literal("Player was already set."));
-                    return 0;
-                }
-
-                String str = String.format("Set player: %s (%s)", player.name(), player.id());
-                context.getSource().sendSuccess(() -> Component.literal(str), false);
-
-                return 1;
-            }
-        }
-
-        context.getSource().sendFailure(Component.literal("Player does not exist."));
-        return 0;
+        return 1;
     }
 
     private static int queueSet(CommandContext<CommandSourceStack> context) {
-        NameAndId player = new NameAndId(
-                UuidArgument.getUuid(context, "uuid"),
-                StringArgumentType.getString(context, "name"));
+        String discordId = StringArgumentType.getString(context, "discord_id");
 
-        boolean ret = McsrCollaborativeManager.INSTANCE.setPlayer(context.getSource().getServer(), player);
+        MemberService.getMemberByDiscordId(discordId)
+                .orTimeout(5, TimeUnit.SECONDS)
+                .thenAcceptAsync(member -> member.asNameAndId().ifPresentOrElse(
+                        player -> {
+                            boolean ret = McsrCollaborativeManager.INSTANCE
+                                    .setPlayer(context.getSource().getServer(), player);
 
-        if (!ret) {
-            context.getSource().sendFailure(Component.literal("Player was already set."));
-            return 0;
-        }
+                            if (!ret) {
+                                context.getSource().sendFailure(Component.literal("Player was already set."));
+                                return;
+                            }
 
-        String str = String.format("Set player: %s (%s)", player.name(), player.id());
-        context.getSource().sendSuccess(() -> Component.literal(str), false);
+                            String str = String.format("Set player: %s (%s)", player.name(), player.id());
+                            context.getSource().sendSuccess(() -> Component.literal(str), false);
+                        },
+                        () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))), context.getSource().getServer());
 
         return 1;
     }
@@ -180,20 +148,14 @@ public class McsrCollaborativeCommands {
                             .then(Commands.literal("cycle")
                                     .executes(McsrCollaborativeCommands::queueCycle))
                             .then(Commands.literal("add")
-                                    .then(Commands.argument("name", StringArgumentType.string())
-                                            .then(Commands.argument("uuid", UuidArgument.uuid())
-                                                    .executes(McsrCollaborativeCommands::queueAdd))))
+                                    .then(Commands.argument("discord_id", StringArgumentType.string())
+                                            .executes(McsrCollaborativeCommands::queueAdd)))
                             .then(Commands.literal("remove")
-                                    .then(Commands.argument("name", StringArgumentType.string())
-                                            .executes(McsrCollaborativeCommands::queueRemoveName))
-                                    .then(Commands.argument("uuid", UuidArgument.uuid())
-                                            .executes(McsrCollaborativeCommands::queueRemoveId)))
+                                    .then(Commands.argument("discord_id", StringArgumentType.string())
+                                            .executes(McsrCollaborativeCommands::queueRemove)))
                             .then(Commands.literal("set")
-                                    .then(Commands.argument("name", StringArgumentType.string())
-                                            .executes(McsrCollaborativeCommands::queueSetName))
-                                    .then(Commands.argument("name", StringArgumentType.string())
-                                            .then(Commands.argument("uuid", UuidArgument.uuid())
-                                                    .executes(McsrCollaborativeCommands::queueSet)))))
+                                    .then(Commands.argument("discord_id", StringArgumentType.string())
+                                            .executes(McsrCollaborativeCommands::queueSet))))
                     .then(Commands.literal("debug-events")
                             .then(Commands.literal("begin")
                                     .executes((context) -> {
