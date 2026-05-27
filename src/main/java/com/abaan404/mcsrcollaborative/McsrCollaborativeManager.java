@@ -9,8 +9,6 @@ import com.abaan404.mcsrcollaborative.events.PlayerTurns;
 import com.abaan404.mcsrcollaborative.saved_data.SavedCompletionIGT;
 import com.abaan404.mcsrcollaborative.saved_data.SavedCurrentPlayer;
 import com.abaan404.mcsrcollaborative.utils.PlayerQueue;
-import com.abaan404.mcsrcollaborative.utils.TextUtils;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
