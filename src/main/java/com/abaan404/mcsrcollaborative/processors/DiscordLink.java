@@ -11,6 +11,7 @@ import com.abaan404.mcsrcollaborative.utils.MemberService;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -48,6 +49,9 @@ public class DiscordLink extends ListenerAdapter {
                 break;
             case "signout":
                 signout(event);
+                break;
+            case "skip":
+                skip(event);
                 break;
             default:
                 event.reply("That command does not exist!")
@@ -110,6 +114,42 @@ public class DiscordLink extends ListenerAdapter {
         });
     }
 
+    private void skip(SlashCommandInteractionEvent event) {
+        if (server == null) {
+            event.reply("Server is still starting!").queue();
+            return;
+        }
+
+        event.deferReply(true).queue(hook -> {
+            String id = event.getMember().getId();
+            MemberService.getMemberByDiscordId(id).orTimeout(5, TimeUnit.SECONDS).thenAcceptAsync((member) -> {
+                member.asNameAndId().ifPresentOrElse(nameAndId -> {
+                    boolean isCurrentPlayer = McsrCollaborativeManager.INSTANCE.getCurrentPlayer(this.server).id()
+                            .equals(nameAndId.id());
+
+                    boolean isStaffPlayer = event.getMember().getRoles().stream()
+                            .map(Role::getId)
+                            .anyMatch(McsrCollaborative.CONFIG.getBotStaffRole()::equals);
+
+                    if (!isCurrentPlayer || !isStaffPlayer) {
+                        hook.sendMessage("It's not your turn!").queue();
+                        return;
+                    }
+
+                    hook.sendMessage("Skipped!").queue();
+                    McsrCollaborativeManager.INSTANCE.cycleNext(this.server);
+
+                }, () -> {
+                    hook.sendMessage("Please link your account first!").queue();
+                });
+            }).exceptionally(throwable -> {
+                McsrCollaborative.LOGGER.error("Error: ", throwable);
+                hook.sendMessage("An error occurred, please contact staff for help").queue();
+                return null;
+            });
+        });
+    }
+
     private void onPlayerEnd(MinecraftServer server, NameAndId player, NameAndId nextPlayer) {
         if (this.api == null) {
             return;
@@ -151,6 +191,8 @@ public class DiscordLink extends ListenerAdapter {
                 Commands.slash("signup", "Sign up to the MCSR Collaborative event")
                         .setContexts(InteractionContextType.GUILD),
                 Commands.slash("signout", "Sign out of the MCSR Collaborative event")
+                        .setContexts(InteractionContextType.GUILD),
+                Commands.slash("skip", "Skip your turn if you know you won't be able to play.")
                         .setContexts(InteractionContextType.GUILD));
 
         commands.queue();
