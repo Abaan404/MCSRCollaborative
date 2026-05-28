@@ -99,6 +99,10 @@ public class McsrCollaborativeConfig {
         return this.root.bot.channel;
     }
 
+    public String getBotBanRole() {
+        return this.root.bot.banRole;
+    }
+
     public String getBotStaffRole() {
         return this.root.bot.staffRole;
     }
@@ -121,6 +125,7 @@ public class McsrCollaborativeConfig {
         public String token = "<BOT_TOKEN>";
         public String channel = "<BOT_CHANNEL>";
         public String staffRole = "<BOT_STAFF_ROLE>";
+        public String banRole = "<BOT_BAN_ROLE>";
         public String message = "It's %player%'s turn!";
     }
 }

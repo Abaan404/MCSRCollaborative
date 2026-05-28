@@ -43,6 +43,17 @@ public class DiscordLink extends ListenerAdapter {
             return;
         }
 
+        boolean hasBanRole = event.getMember().getRoles().stream()
+                .map(Role::getId)
+                .anyMatch(McsrCollaborative.CONFIG.getBotBanRole()::equals);
+
+        if (hasBanRole) {
+            event.deferReply(true).queue(hook -> {
+                hook.sendMessage("You have been banned from participating, contact staff to know more.").queue();
+            });
+            return;
+        }
+
         switch (event.getName()) {
             case "signup":
                 signup(event);
