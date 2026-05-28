@@ -8,7 +8,7 @@ import com.abaan404.mcsrcollaborative.McsrCollaborative;
 import com.abaan404.mcsrcollaborative.McsrCollaborativeManager;
 import com.abaan404.mcsrcollaborative.events.PlayerTurns;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.players.NameAndId;
@@ -33,33 +33,37 @@ public class PlayerDataTransfer {
         }
 
         Optional.ofNullable(server.getPlayerList().getPlayer(player.id()))
-                .ifPresentOrElse(p -> {
+                .map(p -> {
                     ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(
                             p.problemPath(), McsrCollaborative.LOGGER);
                     try (reporter) {
                         TagValueOutput output = TagValueOutput.createWithContext(reporter, p.registryAccess());
                         p.saveWithoutId(output);
-                        CompoundTag dataToStore = output.buildResult();
+                        return output.buildResult();
 
+                    } catch (Exception e) {
+                        McsrCollaborative.LOGGER.warn("Failed to read player data for {}", p.getName());
+                        return null;
+                    }
+                })
+                .or(() -> {
+                    try {
+                        Path prevFile = playerDirPath.resolve(player.id() + ".dat");
+                        return Optional.of(NbtIo.readCompressed(prevFile, NbtAccounter.unlimitedHeap()));
+                    } catch (Exception e) {
+                        McsrCollaborative.LOGGER.warn("Failed to read player data for {}", player.name());
+                        return Optional.empty();
+                    }
+                }).ifPresent(dataToStore -> {
+                    try {
                         Path tmpFile = Files.createTempFile(playerDirPath, nextPlayer.id() + "-", ".dat");
                         NbtIo.writeCompressed(dataToStore, tmpFile);
 
                         Path realFile = playerDirPath.resolve(nextPlayer.id() + ".dat");
                         Path oldFile = playerDirPath.resolve(nextPlayer.id() + ".dat_old");
                         Util.safeReplaceFile(realFile, tmpFile, oldFile);
-
-                    } catch (Exception var11) {
-                        McsrCollaborative.LOGGER.warn("Failed to save player data for {}", player.name());
-                    }
-                }, () -> {
-                    try {
-                        Path prevFile = playerDirPath.resolve(player.id() + ".dat");
-
-                        Path realFile = playerDirPath.resolve(nextPlayer.id() + ".dat");
-                        Path oldFile = playerDirPath.resolve(nextPlayer.id() + ".dat_old");
-                        Util.safeReplaceFile(realFile, prevFile, oldFile);
-                    } catch (Exception var11) {
-                        McsrCollaborative.LOGGER.warn("Failed to save player data for {}", player.name());
+                    } catch (Exception e) {
+                        McsrCollaborative.LOGGER.warn("Failed to save player data for {}", nextPlayer.name());
                     }
                 });
     }
