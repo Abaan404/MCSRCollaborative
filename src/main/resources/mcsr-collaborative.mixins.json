@@ -2,7 +2,11 @@
     "required": true,
     "package": "com.abaan404.mcsrcollaborative.mixin",
     "compatibilityLevel": "JAVA_25",
-    "mixins": ["MinecraftServerMixin", "ServerPlayerMixin"],
+    "mixins": [
+        "MinecraftServerMixin",
+        "PlayerAdvancementsAccessor",
+        "ServerPlayerMixin"
+    ],
     "injectors": {
         "defaultRequire": 1
     },
