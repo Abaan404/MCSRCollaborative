@@ -49,14 +49,26 @@ dependencies {
 
     include(implementation("net.casualchampionships:arcade-replay:${project.arcade_version}"))
 
+    include(implementation("net.casualchampionships:arcade-interceptor:${project.arcade_version}"))
     include(implementation("net.casualchampionships:arcade-commands:${project.arcade_version}"))
     include(implementation("net.casualchampionships:arcade-event-registry:${project.arcade_version}"))
     include(implementation("net.casualchampionships:arcade-events-server:${project.arcade_version}"))
     include(implementation("net.casualchampionships:arcade-resource-pack-host:${project.arcade_version}"))
     include(implementation("net.casualchampionships:arcade-utils:${project.arcade_version}"))
 
+    // HACKY: manually include jda deps (https://central.sonatype.com/artifact/net.dv8tion/JDA/6.4.1/dependencies)
+    include(implementation("com.fasterxml.jackson.core:jackson-core:${project.jackson_core_version}"))
+    include(implementation("com.fasterxml.jackson.core:jackson-databind:${project.jackson_databind_version}"))
+    include(implementation("com.neovisionaries:nv-websocket-client:${project.nv_websocket_version}"))
+    include(implementation("com.squareup.okhttp3:okhttp-jvm:${project.okhttp_version}"))
+    include(implementation("net.sf.trove4j:core:${project.core_version}"))
+    include(implementation("org.apache.commons:commons-collections4:${project.commons_collections4_version}"))
+    include(implementation("org.slf4j:slf4j-api:${project.slf4j_api_version}"))
+    include(implementation("com.fasterxml.jackson.core:jackson-annotations:${project.jackson_annotations_version}"))
+    include(implementation("com.squareup.okio:okio-jvm:${project.okio_jvm_version}"))
+
     // discord chat link
-    implementation("net.dv8tion:JDA:${project.discord_jda_version}") { // replace $version with the latest version
+    include(implementation("net.dv8tion:JDA:${project.discord_jda_version}") { // replace $version with the latest version
       // Optionally disable audio natives to reduce jar size by excluding `opus-java` and `tink`
       // Gradle DSL:
       exclude module: 'opus-java' // required for encoding audio into opus, not needed if audio is already provided in opus encoding
@@ -64,7 +76,7 @@ dependencies {
       // Kotlin DSL:
       // exclude(module="opus-java") // required for encoding audio into opus, not needed if audio is already provided in opus encoding
       // exclude(module="tink") // required for encrypting and decrypting audio
-    }
+    })
 }
 
 processResources {
