@@ -142,7 +142,7 @@ public class DiscordLink extends ListenerAdapter {
                             .map(Role::getId)
                             .anyMatch(McsrCollaborative.CONFIG.getBotStaffRole()::equals);
 
-                    if (!isCurrentPlayer || !isStaffPlayer) {
+                    if (!isCurrentPlayer && !isStaffPlayer) {
                         hook.sendMessage("It's not your turn!").queue();
                         return;
                     }
