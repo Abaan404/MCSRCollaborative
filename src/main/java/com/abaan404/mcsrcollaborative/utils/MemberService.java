@@ -9,18 +9,26 @@ import net.minecraft.server.players.NameAndId;
 import static com.abaan404.mcsrcollaborative.McsrCollaborative.CONFIG;
 
 public class MemberService {
-    public static CompletableFuture<MemberInfo> getMemberByDiscordId(String discordId) {
+    public static CompletableFuture<Optional<MemberInfo>> getMemberByDiscordId(String discordId) {
         return Http.get(CONFIG.getApiUri() + "members/member?id=" + discordId, MemberInfo.class);
     }
 
-    public static CompletableFuture<MemberInfo> getMemberByJavaId(UUID javaId) {
+    public static CompletableFuture<Optional<MemberInfo>> getMemberByJavaId(UUID javaId) {
         String uuid = javaId.toString().replaceAll("-", "");
         return Http.get(CONFIG.getApiUri() + "members/member?javaId=" + uuid, MemberInfo.class);
     }
 
-    public static CompletableFuture<MemberInfo> getMemberByBedrockId(UUID bedrockId) {
+    public static CompletableFuture<Optional<MemberInfo>> getMemberByBedrockId(UUID bedrockId) {
         String uuid = String.valueOf(bedrockId.getLeastSignificantBits());
         return Http.get(CONFIG.getApiUri() + "members/member?bedrockId=" + uuid, MemberInfo.class);
+    }
+
+    public static CompletableFuture<Optional<MemberInfo>> getByNameAndId(NameAndId nameAndId) {
+        if (nameAndId.name().startsWith(".")) {
+            return MemberService.getMemberByBedrockId(nameAndId.id());
+        } else {
+            return MemberService.getMemberByJavaId(nameAndId.id());
+        }
     }
 
     public static class MemberInfo {

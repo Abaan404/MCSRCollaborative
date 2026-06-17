@@ -35,6 +35,20 @@ public interface PlayerTurns {
                 }
             });
 
+    Event<TurnAlertTimeout> ALERT_TIMEOUT = EventFactory.createArrayBacked(TurnAlertTimeout.class,
+            (listeners) -> (server, player) -> {
+                for (TurnAlertTimeout listener : listeners) {
+                    listener.onTurnAlertTimeout(server, player);
+                }
+            });
+
+    Event<TurnTimeout> TIMEOUT = EventFactory.createArrayBacked(TurnTimeout.class,
+            (listeners) -> (server, player) -> {
+                for (TurnTimeout listener : listeners) {
+                    listener.onTurnTimeout(server, player);
+                }
+            });
+
     Event<TurnTick> TICK = EventFactory.createArrayBacked(TurnTick.class,
             (listeners) -> (player, duration) -> {
                 for (TurnTick listener : listeners) {
@@ -67,6 +81,16 @@ public interface PlayerTurns {
     @FunctionalInterface
     interface TurnEnd {
         void onTurnEnd(MinecraftServer server, NameAndId player, NameAndId nextPlayer);
+    }
+
+    @FunctionalInterface
+    interface TurnAlertTimeout {
+        void onTurnAlertTimeout(MinecraftServer server, NameAndId player);
+    }
+
+    @FunctionalInterface
+    interface TurnTimeout {
+        void onTurnTimeout(MinecraftServer server, NameAndId player);
     }
 
     @FunctionalInterface

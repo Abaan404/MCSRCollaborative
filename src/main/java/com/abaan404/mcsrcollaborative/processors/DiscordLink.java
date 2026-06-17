@@ -1,7 +1,6 @@
 package com.abaan404.mcsrcollaborative.processors;
 
 import java.util.EnumSet;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.abaan404.mcsrcollaborative.McsrCollaborative;
@@ -80,7 +79,7 @@ public class DiscordLink extends ListenerAdapter {
         event.deferReply(true).queue(hook -> {
             String id = event.getMember().getId();
             MemberService.getMemberByDiscordId(id).orTimeout(5, TimeUnit.SECONDS).thenAcceptAsync((member) -> {
-                member.asNameAndId().ifPresentOrElse(nameAndId -> {
+                member.flatMap(m -> m.asNameAndId()).ifPresentOrElse(nameAndId -> {
                     if (!McsrCollaborativeManager.INSTANCE.addPlayer(this.server, nameAndId)) {
                         hook.sendMessage("You are already participating!").queue();
                         return;
@@ -107,7 +106,7 @@ public class DiscordLink extends ListenerAdapter {
         event.deferReply(true).queue(hook -> {
             String id = event.getMember().getId();
             MemberService.getMemberByDiscordId(id).orTimeout(5, TimeUnit.SECONDS).thenAcceptAsync((member) -> {
-                member.asNameAndId().ifPresentOrElse(nameAndId -> {
+                member.flatMap(m -> m.asNameAndId()).ifPresentOrElse(nameAndId -> {
                     if (!McsrCollaborativeManager.INSTANCE.removePlayer(this.server, nameAndId.id())) {
                         hook.sendMessage("You are already not participating!").queue();
                         return;
@@ -134,7 +133,7 @@ public class DiscordLink extends ListenerAdapter {
         event.deferReply(true).queue(hook -> {
             String id = event.getMember().getId();
             MemberService.getMemberByDiscordId(id).orTimeout(5, TimeUnit.SECONDS).thenAcceptAsync((member) -> {
-                member.asNameAndId().ifPresentOrElse(nameAndId -> {
+                member.flatMap(m -> m.asNameAndId()).ifPresentOrElse(nameAndId -> {
                     boolean isCurrentPlayer = McsrCollaborativeManager.INSTANCE.getCurrentPlayer(this.server).id()
                             .equals(nameAndId.id());
 
@@ -161,6 +160,46 @@ public class DiscordLink extends ListenerAdapter {
         });
     }
 
+    private void onPlayerTimeout(MinecraftServer server, NameAndId player) {
+        if (this.api == null) {
+            return;
+        }
+
+        MemberService.getByNameAndId(player)
+                .orTimeout(5, TimeUnit.SECONDS)
+                .thenAcceptAsync(member -> member.ifPresent(m -> this.api.openPrivateChannelById(m.id)
+                        .queue(channel -> {
+                            channel.sendMessage(new MessageCreateBuilder()
+                                    .setContent(McsrCollaborative.CONFIG.getBotTimeoutMessage())
+                                    .build())
+                                    .queue();
+                        })))
+                .exceptionally(throwable -> {
+                    McsrCollaborative.LOGGER.error("Error: ", throwable);
+                    return null;
+                });
+    }
+
+    private void onPlayerAlertTimeout(MinecraftServer server, NameAndId player) {
+        if (this.api == null) {
+            return;
+        }
+
+        MemberService.getByNameAndId(player)
+                .orTimeout(5, TimeUnit.SECONDS)
+                .thenAcceptAsync(member -> member.ifPresent(m -> this.api.openPrivateChannelById(m.id)
+                        .queue(channel -> {
+                            channel.sendMessage(new MessageCreateBuilder()
+                                    .setContent(McsrCollaborative.CONFIG.getBotAlertTimeoutMessage())
+                                    .build())
+                                    .queue();
+                        })))
+                .exceptionally(throwable -> {
+                    McsrCollaborative.LOGGER.error("Error: ", throwable);
+                    return null;
+                });
+    }
+
     private void onPlayerEnd(MinecraftServer server, NameAndId player, NameAndId nextPlayer) {
         if (this.api == null) {
             return;
@@ -172,21 +211,16 @@ public class DiscordLink extends ListenerAdapter {
             return;
         }
 
-        CompletableFuture<MemberService.MemberInfo> memberFuture;
-        if (nextPlayer.name().startsWith(".")) {
-            memberFuture = MemberService.getMemberByBedrockId(nextPlayer.id());
-        } else {
-            memberFuture = MemberService.getMemberByJavaId(nextPlayer.id());
-        }
-        memberFuture.orTimeout(5, TimeUnit.SECONDS)
-                .thenAccept((member) -> channel.getGuild().retrieveMemberById(member.id)
+        MemberService.getByNameAndId(nextPlayer)
+                .orTimeout(5, TimeUnit.SECONDS)
+                .thenAccept(m -> m.ifPresent(member -> channel.getGuild().retrieveMemberById(member.id)
                         .queue(discordMember -> channel.sendMessage(new MessageCreateBuilder()
                                 .setContent(McsrCollaborative.CONFIG.getBotMessage()
                                         .replace("%player%", discordMember.getAsMention()))
                                 .build())
                                 .queue(),
                                 error -> McsrCollaborative.LOGGER.error("Could not find member with discord id {}.",
-                                        member.id)));
+                                        member.id))));
     }
 
     public static void initialize() {
@@ -209,6 +243,8 @@ public class DiscordLink extends ListenerAdapter {
         commands.queue();
 
         PlayerTurns.END.register(INSTANCE::onPlayerEnd);
+        PlayerTurns.TIMEOUT.register(INSTANCE::onPlayerTimeout);
+        PlayerTurns.ALERT_TIMEOUT.register(INSTANCE::onPlayerAlertTimeout);
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> INSTANCE.server = server);
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> jda.shutdown());

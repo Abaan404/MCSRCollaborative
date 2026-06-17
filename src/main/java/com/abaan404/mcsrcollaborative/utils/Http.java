@@ -8,6 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class Http {
@@ -16,7 +17,7 @@ public class Http {
             .build();
     private static final Gson gson = new Gson();
 
-    public static <T> CompletableFuture<T> get(String uri, Class<T> responseType) {
+    public static <T> CompletableFuture<Optional<T>> get(String uri, Class<T> responseType) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(uri))
                 .timeout(Duration.ofSeconds(5))
@@ -27,11 +28,11 @@ public class Http {
                 .thenApply(response -> parseResponse(response, responseType));
     }
 
-    private static <T> T parseResponse(HttpResponse<String> response, Class<T> responseType) {
+    private static <T> Optional<T> parseResponse(HttpResponse<String> response, Class<T> responseType) {
         if (response.statusCode() >= 400) {
             McsrCollaborative.LOGGER.error("API Request to {} failed: {} {}", response.uri(), response.statusCode(), response.body());
-            throw new RuntimeException("API returned error: " + response.statusCode() + " " + response.body());
+            return Optional.empty();
         }
-        return gson.fromJson(response.body(), responseType);
+        return Optional.of(gson.fromJson(response.body(), responseType));
     }
 }

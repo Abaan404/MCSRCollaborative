@@ -45,6 +45,9 @@ public class McsrCollaborativeConfig {
             return false;
         }
 
+        // save again incase of missing fields
+        save();
+
         return true;
     }
 
@@ -68,6 +71,10 @@ public class McsrCollaborativeConfig {
 
     public long getTimeout() {
         return this.root.timeout;
+    }
+
+    public long getAlertTimeout() {
+        return this.root.alertTimeout;
     }
 
     public void setPlayers(List<NameAndId> players) {
@@ -111,10 +118,19 @@ public class McsrCollaborativeConfig {
         return this.root.bot.message;
     }
 
+    public String getBotTimeoutMessage() {
+        return this.root.bot.timeoutMessage;
+    }
+
+    public String getBotAlertTimeoutMessage() {
+        return this.root.bot.timeoutAlertMessage;
+    }
+
     private static class Root {
         public String path = "./mcsr-recordings/";
         public int duration = 5 * 60 * 1000;
         public long timeout = 24 * 60 * 60 * 1000;
+        public long alertTimeout = 6 * 60 * 60 * 1000;
         public List<NameAndId> players = new ObjectArrayList<>();
         public SimpleRecorderSettings recorderSettings = new SimpleRecorderSettings();
         public String apiUri = "http://localhost:3000/api/";
@@ -127,5 +143,7 @@ public class McsrCollaborativeConfig {
         public String staffRole = "<BOT_STAFF_ROLE>";
         public String banRole = "<BOT_BAN_ROLE>";
         public String message = "It's %player%'s turn!";
+        public String timeoutMessage = "Your turn has ended and you've been removed from the event. You can rejoin anytime using /signup!";
+        public String timeoutAlertMessage = "Your turn is about to end in 6 hours!";
     }
 }

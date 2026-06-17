@@ -370,9 +370,24 @@ public class McsrCollaborativeManager {
             SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
             savedQueuedPlayer.setTimeout(this.timeout);
 
+            NameAndId savedPlayer = savedQueuedPlayer.getPlayer();
+
             // player didnt join, go next
             if (this.timeout <= 0) {
+                // invoke event
+                PlayerTurns.TIMEOUT.invoker().onTurnTimeout(server, savedPlayer);
+
+                // remove player since they didn't join
+                this.removePlayer(server, savedPlayer.id());
+
                 this.cycleNext(server);
+                return;
+            }
+
+            long alertTimeout = McsrCollaborative.CONFIG.getAlertTimeout() / 50;
+            if (this.timeout == alertTimeout) {
+                // invoke event
+                PlayerTurns.ALERT_TIMEOUT.invoker().onTurnAlertTimeout(server, savedQueuedPlayer.getPlayer());
                 return;
             }
         }

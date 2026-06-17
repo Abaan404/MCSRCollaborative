@@ -86,8 +86,8 @@ public class McsrCollaborativeCommands {
 
         MemberService.getMemberByDiscordId(discordId)
                 .orTimeout(5, TimeUnit.SECONDS)
-                .thenAcceptAsync(member -> member.asNameAndId().ifPresentOrElse(
-                        player -> {
+                .thenAcceptAsync(member -> member.orElseThrow().asNameAndId()
+                        .ifPresentOrElse(player -> {
                             boolean ret = McsrCollaborativeManager.INSTANCE
                                     .addPlayer(context.getSource().getServer(), player);
 
@@ -98,8 +98,12 @@ public class McsrCollaborativeCommands {
 
                             String str = String.format("Added player: %s (%s)", player.name(), player.id());
                             context.getSource().sendSuccess(() -> Component.literal(str), false);
-                        },
-                        () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))), context.getSource().getServer());
+                        }, () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))),
+                        context.getSource().getServer())
+                .exceptionally(throwable -> {
+                    context.getSource().sendFailure(Component.literal("Something went wrong"));
+                    return null;
+                });
 
         return 1;
     }
@@ -109,7 +113,7 @@ public class McsrCollaborativeCommands {
 
         MemberService.getMemberByDiscordId(discordId)
                 .orTimeout(5, TimeUnit.SECONDS)
-                .thenAcceptAsync(member -> member.asNameAndId().ifPresentOrElse(
+                .thenAcceptAsync(member -> member.orElseThrow().asNameAndId().ifPresentOrElse(
                         player -> {
                             boolean ret = McsrCollaborativeManager.INSTANCE
                                     .removePlayer(context.getSource().getServer(), player.id());
@@ -122,7 +126,12 @@ public class McsrCollaborativeCommands {
                             String str = String.format("Removed player: %s (%s)", player.name(), player.id());
                             context.getSource().sendSuccess(() -> Component.literal(str), false);
                         },
-                        () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))), context.getSource().getServer());
+                        () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))),
+                        context.getSource().getServer())
+                .exceptionally(throwable -> {
+                    context.getSource().sendFailure(Component.literal("Something went wrong"));
+                    return null;
+                });
 
         return 1;
     }
@@ -132,7 +141,7 @@ public class McsrCollaborativeCommands {
 
         MemberService.getMemberByDiscordId(discordId)
                 .orTimeout(5, TimeUnit.SECONDS)
-                .thenAcceptAsync(member -> member.asNameAndId().ifPresentOrElse(
+                .thenAcceptAsync(member -> member.orElseThrow().asNameAndId().ifPresentOrElse(
                         player -> {
                             boolean ret = McsrCollaborativeManager.INSTANCE
                                     .setPlayer(context.getSource().getServer(), player);
@@ -145,7 +154,12 @@ public class McsrCollaborativeCommands {
                             String str = String.format("Set player: %s (%s)", player.name(), player.id());
                             context.getSource().sendSuccess(() -> Component.literal(str), false);
                         },
-                        () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))), context.getSource().getServer());
+                        () -> context.getSource().sendFailure(Component.literal("Unknown discord id"))),
+                        context.getSource().getServer())
+                .exceptionally(throwable -> {
+                    context.getSource().sendFailure(Component.literal("Something went wrong"));
+                    return null;
+                });
 
         return 1;
     }
