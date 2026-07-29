@@ -104,6 +104,10 @@ public class McsrCollaborativeManager {
             this.duration = McsrCollaborative.CONFIG.getDuration() / 50;
             this.timeout = McsrCollaborative.CONFIG.getTimeout() / 50;
 
+            // emit events since the current player changed
+            NameAndId nextPlayer = this.playerQueue.getCurrentPlayer();
+            PlayerTurns.END.invoker().onTurnEnd(server, nextPlayer, oldPlayer);
+
             // update storage
             SavedCurrentPlayer savedQueuedPlayer = SavedCurrentPlayer.getInstance(server);
             savedQueuedPlayer.setPlayer(this.playerQueue.getCurrentPlayer());
@@ -349,7 +353,8 @@ public class McsrCollaborativeManager {
 
             // disconnect
             if (!this.playerQueue.hasPlayer(player.nameAndId())) {
-                player.connection.disconnect(Component.literal("You haven't participated yet! Join the event using /signup in the discord server."));
+                player.connection.disconnect(Component
+                        .literal("You haven't participated yet! Join the event using /signup in the discord server."));
             } else {
                 player.connection.disconnect(Component.literal("Not yet! Check back soon."));
             }
